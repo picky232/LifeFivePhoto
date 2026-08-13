@@ -1,0 +1,21 @@
+# 의존성
+node_modules/
+
+# 인증서와 개인키 — 공개 금지
+# CA 개인키가 유출되면 이 CA를 신뢰하는 기기에 대해 임의 사이트를 사칭할 수 있다.
+# 인증서는 각자 `node generate-cert.js` 로 새로 만든다.
+server/certs/
+
+# 촬영 결과물 — 전화번호와 얼굴 사진이 담긴다
+output/
+
+# 로컬 전용 설정
+.claude/settings.local.json
+
+# 프로젝트와 무관한 로컬 문서
+docs/orca-agent-harness-guide.md
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
