@@ -29,6 +29,37 @@
 
 ## 실행
 
+### 0. 노트북 핫스팟 켜기
+
+접속 기기가 붙을 네트워크를 노트북이 직접 만든다.
+
+```
+설정 > 네트워크 및 인터넷 > 모바일 핫스팟 > 켜기
+```
+
+같은 화면에서 네트워크 이름과 비밀번호를 확인할 수 있다. 핫스팟을 켜면 노트북에 `192.168.137.1`이 부여된다. 이 값은 Windows가 고정으로 지정하므로 장소가 바뀌어도 동일하다.
+
+PowerShell로 조작하려면:
+
+```powershell
+[Windows.Networking.NetworkOperators.NetworkOperatorTetheringManager,Windows.Networking.NetworkOperators,ContentType=WindowsRuntime] | Out-Null
+[Windows.Networking.Connectivity.NetworkInformation,Windows.Networking.Connectivity,ContentType=WindowsRuntime] | Out-Null
+$profile = [Windows.Networking.Connectivity.NetworkInformation]::GetInternetConnectionProfile()
+$tm = [Windows.Networking.NetworkOperators.NetworkOperatorTetheringManager]::CreateFromConnectionProfile($profile)
+
+$tm.TetheringOperationalState       # 현재 상태
+$tm.StartTetheringAsync()           # 켜기
+$tm.StopTetheringAsync()            # 끄기
+```
+
+`GetInternetConnectionProfile()`은 노트북에 인터넷 연결이 있어야 값을 반환한다. 핫스팟 자체는 인터넷 없이도 동작하지만, 이 API로 조작하려면 상단 연결이 하나 필요하다.
+
+부여된 주소 확인:
+
+```powershell
+Get-NetIPAddress -AddressFamily IPv4 | Where-Object IPAddress -like '192.168.137.*'
+```
+
 ### 1. 의존성 설치
 
 ```bash
@@ -112,6 +143,23 @@ npm start
 { "status": "ok" }
 ```
 
+## 노트북에서 직접 확인하기
+
+접속 기기 없이 서버만 확인할 때 쓴다.
+
+```powershell
+$ca = "server/certs/ca/rootCA.pem"
+
+curl.exe -s --ssl-revoke-best-effort --cacert $ca https://192.168.137.1:3000/health
+
+curl.exe -s --ssl-revoke-best-effort --cacert $ca -X POST https://192.168.137.1:3000/upload `
+  -F "phone=01012345678" -F "photo=@테스트.png;type=image/png"
+```
+
+`--ssl-revoke-best-effort`가 필요한 이유: Windows의 curl은 schannel 백엔드를 쓰는데, 인증서의 폐기 목록(CRL) 배포 지점을 찾으려다 실패해 `CERT_TRUST_REVOCATION_STATUS_UNKNOWN` 오류를 낸다. 자체 서명 CA에는 CRL 배포 지점이 없으므로 정상이며, 인증서 자체의 문제가 아니다. iOS Safari는 사용자가 설치한 루트 인증서에 이 검사를 하지 않으므로 실제 사용에는 영향이 없다.
+
+테스트로 만든 파일은 `output/` 아래에 남으므로 확인 후 정리한다.
+
 ## 저장 위치
 
 ```
@@ -121,6 +169,31 @@ output/
 ```
 
 `output/`은 저장소에 포함되지 않는다. 전화번호와 얼굴 사진이 담기므로 공개 저장소에 올리지 않는다.
+
+## 검증 상태
+
+노트북에서 확인 가능한 범위는 모두 통과했다. 실제 기기가 개입하는 항목은 미검증이다.
+
+**확인됨** (노트북 로컬 및 핫스팟 IP 기준)
+
+| 항목 | 결과 |
+|---|---|
+| 핫스팟 IP | `192.168.137.1` 부여 확인 |
+| HTTPS 기동 | 포트 3000, 인증서 검증 통과 |
+| `GET /` | 200, `text/html` |
+| 없는 정적 파일 | 404 |
+| `GET /health` | 200, `{"status":"ok"}` |
+| `POST /upload` 정상 | 200, `output/{날짜}/{전화번호}.png` 저장 |
+| `POST /upload` 전화번호·이미지 누락 | 400 |
+| 전화번호 형식 위반 | 400 (경로 조작 시도 차단 포함) |
+| 같은 번호 재업로드 | `_2` 접미사로 별도 저장 |
+
+**미검증**
+
+- 접속 기기에서의 실제 접속 및 CA 신뢰 여부
+- `getUserMedia` 사용 가능 여부 (인증서 설치가 성공해야 열린다)
+- 실제 클라이언트 구현과의 통합
+- 장소 이동 후 핫스팟 재구성 시 동작
 
 ## 저장소에 포함하지 않는 것
 
