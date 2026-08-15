@@ -8,10 +8,12 @@ const https = require('https');
 const express = require('express');
 const multer = require('multer');
 
-const PORT = 3000;
+// 포트와 저장 경로는 환경변수로 덮어쓸 수 있다. 테스트가 실제 촬영 결과물을
+// 건드리지 않고 별도 임시 폴더에서 돌기 위한 것으로, 평소에는 기본값을 쓴다.
+const PORT = Number(process.env.PORT) || 3000;
 const ROOT_DIR = path.join(__dirname, '..');
 const CLIENT_DIR = path.join(ROOT_DIR, 'client');
-const OUTPUT_DIR = path.join(ROOT_DIR, 'output');
+const OUTPUT_DIR = process.env.OUTPUT_DIR || path.join(ROOT_DIR, 'output');
 const CERT_DIR = path.join(__dirname, 'certs');
 
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;

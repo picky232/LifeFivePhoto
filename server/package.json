@@ -5,7 +5,9 @@
   "description": "인생오컷 로컬 서버 - 클라이언트 정적 파일 서빙 및 완성 이미지 저장",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "cert": "node generate-cert.js",
+    "test": "node test-api.js"
   },
   "dependencies": {
     "express": "^5.2.1",
