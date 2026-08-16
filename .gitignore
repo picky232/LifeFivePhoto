@@ -19,3 +19,9 @@ docs/orca-agent-harness-guide.md
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# 아이패드 클라이언트 소스의 빌드 부산물
+# client/ 에 뽑아낸 결과물은 커밋한다 — 행사 노트북에서 빌드 없이 바로 서빙하기 위해서다.
+client-src/.next/
+client-src/out/
+client-src/node_modules/
