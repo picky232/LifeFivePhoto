@@ -11,6 +11,7 @@ import {
   SHOOT_INTERVAL,
   SHOT_COUNT,
 } from "@/lib/frame";
+import { checkServer } from "@/lib/upload";
 
 /** iOS 사파리 전용 레거시 플래그 (홈 화면 실행 여부) */
 type IosNavigator = Navigator & { standalone?: boolean };
@@ -119,6 +120,7 @@ export default function DiagnosticsPage() {
   const [facing, setFacing] = useState<"user" | "environment">("user");
   const [shot, setShot] = useState<string | null>(null);
   const [wakeMsg, setWakeMsg] = useState<string>("");
+  const [serverMsg, setServerMsg] = useState<string>("");
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -321,6 +323,26 @@ export default function DiagnosticsPage() {
           <img src={shot} alt="캡처 결과" className="w-full" />
         </section>
       )}
+
+      {/* 행사장에서 제일 먼저 확인할 것 — 노트북 서버가 살아 있는가 */}
+      <section className="mt-8">
+        <h2 className="text-ink-60 mb-3 text-sm font-bold">서버 연결</h2>
+        <button
+          onClick={async () => {
+            setServerMsg("확인 중…");
+            const ok = await checkServer();
+            setServerMsg(
+              ok
+                ? "✅ 서버 응답 정상 (/health)"
+                : "❌ 서버에 연결되지 않습니다. 노트북 서버와 핫스팟을 확인하세요",
+            );
+          }}
+          className={btn}
+        >
+          서버 확인
+        </button>
+        {serverMsg && <p className="text-ink-60 mt-2 text-sm">{serverMsg}</p>}
+      </section>
 
       <section className="mt-8">
         <h2 className="text-ink-60 mb-3 text-sm font-bold">화면 꺼짐 방지</h2>

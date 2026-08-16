@@ -236,6 +236,7 @@ export async function composeFrame(shots: string[]): Promise<string> {
 
   drawBrand(ctx, displayFont, symbol);
 
-  // 인쇄용이라 화질을 아끼지 않는다
-  return canvas.toDataURL("image/jpeg", 0.95);
+  // PNG 로 뽑는다. 서버 API 명세가 image/png 이고, 저장 파일도 .png 다.
+  // 손실 압축이 없어 인쇄에도 유리하다 — 대신 용량이 커서(수 MB) 업로드가 그만큼 걸린다.
+  return canvas.toDataURL("image/png");
 }
