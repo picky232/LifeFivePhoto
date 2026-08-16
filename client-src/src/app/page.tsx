@@ -100,16 +100,10 @@ export default function BoothPage() {
     setStep("phone");
   }, []);
 
+  // 번호는 필수다. 서버가 번호를 파일명으로 쓰기 때문에, 번호가 없으면
+  // 사진이 노트북에 저장되지 않고 뽑을 파일도 안 생긴다.
   const submitPhone = useCallback((value: string) => {
     setPhone(value);
-    setStep("printing");
-    // TODO: 여기서 (1) 인화 요청 (2) 클라우드 업로드+문자 발송 을 각각 보낸다.
-    //       프린터 연결 방식(윈도우 노트북)이 확정되면 붙인다. 둘은 서로를 기다리지
-    //       않아야 한다 — 인터넷이 끊겨도 인화는 되어야 하니까.
-  }, []);
-
-  const skipPhone = useCallback(() => {
-    setPhone(null);
     setStep("printing");
   }, []);
 
@@ -169,15 +163,12 @@ export default function BoothPage() {
 
     case "phone":
       return (
-        <PhoneScreen
-          onSubmit={submitPhone}
-          onSkip={skipPhone}
-          onBack={() => setStep("preview")}
-        />
+        <PhoneScreen onSubmit={submitPhone} onBack={() => setStep("preview")} />
       );
 
     case "printing":
-      return <PrintingScreen frame={frame} phone={phone} onDone={printDone} />;
+      // 번호 없이는 이 단계에 올 수 없다 (PhoneScreen 이 막는다)
+      return <PrintingScreen frame={frame} phone={phone ?? ""} onDone={printDone} />;
 
     case "done":
       return <DoneScreen onReset={reset} />;

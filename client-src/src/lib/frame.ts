@@ -85,8 +85,14 @@ export const PICK_COUNT = SLOTS.length; // 5
 /** 자동 촬영 간격(초) — 설계서 10초 */
 export const SHOOT_INTERVAL = 10;
 
-/** 인쇄 소요 안내(초) — 설계서 55초. 실측하면 이 값을 고친다. */
-export const PRINT_SECONDS = 55;
+/**
+ * 인쇄 요청 뒤 완료 화면으로 넘어가기까지 기다리는 시간(초).
+ *
+ * 인쇄는 노트북에서 사람이 직접 뽑는다. 그래서 앱이 "몇 초 뒤에 나온다"를
+ * 알 수 없다 — 예전에 55초를 세던 카운트다운은 지킬 수 없는 약속이었다.
+ * 지금은 전송이 끝났다는 걸 잠깐 보여주고 넘어가기만 한다.
+ */
+export const REQUEST_DONE_SECONDS = 6;
 
 /** 아무 조작 없을 때 처음 화면으로 되돌아가는 시간(초) */
 export const IDLE_RESET_SECONDS = 120;

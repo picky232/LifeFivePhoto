@@ -29,13 +29,9 @@ const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "back"]
  */
 export function PhoneScreen({
   onSubmit,
-  onSkip,
   onBack,
 }: {
-  /** 번호를 받아 사진도 보낸다 */
   onSubmit: (phone: string) => void;
-  /** 번호 없이 인화만 한다 */
-  onSkip: () => void;
   onBack: () => void;
 }) {
   const [digits, setDigits] = useState("");
@@ -51,14 +47,17 @@ export function PhoneScreen({
 
   return (
     <Screen>
-      <TopRule label="사진 받기" right={<span className="text-lg font-semibold">건너뛸 수 있어요</span>} />
+      <TopRule
+        label="사진 받기"
+        right={<span className="text-lg font-semibold">마지막 단계</span>}
+      />
 
       <div className="mt-8 flex items-end justify-between gap-10">
         <div>
           <h1 className="headline text-7xl">번호를 눌러주세요</h1>
           <p className="text-ink-60 mt-3 max-w-xl text-xl leading-relaxed">
-            인화는 번호 없이도 됩니다. 원본 사진을 휴대폰으로 받고 싶을 때만
-            입력하세요.
+            번호로 사진을 찾기 때문에 인화에도 필요합니다. 원본 사진도 이
+            번호로 보내드립니다.
           </p>
         </div>
 
@@ -124,9 +123,6 @@ export function PhoneScreen({
       <div className="mt-2 flex items-center gap-4">
         <BigButton variant="plain" onClick={onBack}>
           뒤로
-        </BigButton>
-        <BigButton variant="line" onClick={onSkip}>
-          번호 없이 인화만
         </BigButton>
         <BigButton
           className="flex-1"
