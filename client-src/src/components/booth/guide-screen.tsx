@@ -2,7 +2,7 @@
 
 import { Screen, TopRule } from "./screen";
 import { BigButton } from "@/components/ui/big-button";
-import { PICK_COUNT, PRINT_SECONDS, SHOOT_INTERVAL, SHOT_COUNT } from "@/lib/frame";
+import { PICK_COUNT, SHOOT_INTERVAL, SHOT_COUNT } from "@/lib/frame";
 import type { CameraState } from "@/hooks/use-camera";
 
 /**
@@ -39,7 +39,8 @@ export function GuideScreen({
     {
       title: "가져가기",
       lead: "인화해서 바로 가져갑니다",
-      body: `출력에 약 ${PRINT_SECONDS}초 걸립니다. 사진은 휴대폰으로도 받을 수 있어요.`,
+      // 인쇄는 노트북에서 사람이 뽑는다. 몇 초 걸린다고 못 박으면 지킬 수 없다.
+      body: "운영자가 인화해서 전달해드립니다. 원본 사진은 휴대폰으로도 보내드려요.",
     },
   ];
 
