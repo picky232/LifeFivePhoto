@@ -41,6 +41,11 @@ yarn-error.log*
 next-env.d.ts
 
 # ── 이 프로젝트 추가분 ───────────────────────────────────
+# 이 폴더는 pnpm 을 쓴다 (pnpm-lock.yaml). npm 으로 한 번 설치하면
+# package-lock.json 이 생기는데, 두 락파일이 같이 있으면 사람마다
+# 다른 버전이 깔린다. 커밋되지 않도록 막아둔다.
+package-lock.json
+
 # 비밀값
 *.key
 secrets/

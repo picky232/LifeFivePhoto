@@ -16,5 +16,5 @@
 export const PHOTO_KEEP_DAYS = 7;
 
 export const CONSENT_TEXT =
-  `사진을 보내드리기 위해 휴대폰 번호를 받습니다. ` +
+  `휴대폰 번호 수집에 동의합니다. ` +
   `번호와 사진은 행사 종료 후 ${PHOTO_KEEP_DAYS}일 안에 모두 삭제합니다.`;

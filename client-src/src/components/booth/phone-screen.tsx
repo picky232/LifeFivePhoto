@@ -56,8 +56,7 @@ export function PhoneScreen({
         <div>
           <h1 className="headline text-7xl">번호를 눌러주세요</h1>
           <p className="text-ink-60 mt-3 max-w-xl text-xl leading-relaxed">
-            번호로 사진을 찾기 때문에 인화에도 필요합니다. 원본 사진도 이
-            번호로 보내드립니다.
+            번호로 사진을 찾기 때문에 인화에도 필요합니다.
           </p>
         </div>
 
@@ -129,7 +128,7 @@ export function PhoneScreen({
           disabled={!valid || !agreed}
           onClick={() => onSubmit(digits)}
         >
-          인화하고 사진 받기
+          확인
         </BigButton>
       </div>
     </Screen>

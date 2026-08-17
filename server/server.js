@@ -8,13 +8,35 @@ const https = require('https');
 const express = require('express');
 const multer = require('multer');
 
+/**
+ * 촬영 결과물을 저장할 기본 위치를 정한다.
+ *
+ * 바탕화면에 둔다 — 행사 중에 운영자가 사진을 찾아 인쇄해야 하는데,
+ * 프로젝트 폴더 안쪽까지 들어가는 것보다 바탕화면이 빠르다.
+ *
+ * 경로를 박아두지 않는 이유는 이 저장소를 다른 사람도 그대로 쓰기 때문이다.
+ * OneDrive 백업이 켜져 있으면 바탕화면이 그쪽으로 옮겨가므로 함께 살펴본다.
+ */
+function defaultOutputDir() {
+  const home = os.homedir();
+  const candidates = [
+    path.join(home, 'Desktop'),
+    path.join(home, 'OneDrive', 'Desktop'),
+    path.join(home, 'OneDrive', '바탕 화면'),
+  ];
+
+  const desktop = candidates.find((dir) => fs.existsSync(dir)) || home;
+
+  return path.join(desktop, 'output');
+}
+
 // 포트와 저장 경로는 환경변수로 덮어쓸 수 있다. 테스트가 실제 촬영 결과물을
 // 건드리지 않고 별도 임시 폴더에서 돌기 위한 것으로, 평소에는 기본값을 쓴다.
 const PORT = Number(process.env.PORT) || 3000;
 const ROOT_DIR = path.join(__dirname, '..');
 const CLIENT_DIR = path.join(ROOT_DIR, 'client');
-const OUTPUT_DIR = process.env.OUTPUT_DIR || path.join(ROOT_DIR, 'output');
-const CERT_DIR = path.join(__dirname, 'certs');
+const OUTPUT_DIR = process.env.OUTPUT_DIR || defaultOutputDir();
+const CERT_DIR = process.env.CERT_DIR || path.join(__dirname, 'certs');
 
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 

@@ -84,7 +84,7 @@ export function PreviewScreen({
           disabled={!composed}
           onClick={() => composed && onConfirm(composed)}
         >
-          이 사진으로 인화하기
+          선택 완료
         </BigButton>
       </div>
     </Screen>

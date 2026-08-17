@@ -107,9 +107,6 @@ export function PrintingScreen({
               <p className="mt-6 text-2xl font-semibold">
                 운영자가 사진을 인화해 전달해드립니다
               </p>
-              <p className="text-ink/60 mt-2 text-xl">
-                원본 사진은 잠시 뒤 {phone} 으로 보내드립니다
-              </p>
               <BigButton className="mt-8" onClick={onDone}>
                 확인 ({left})
               </BigButton>

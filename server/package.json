@@ -7,13 +7,15 @@
   "scripts": {
     "start": "node server.js",
     "cert": "node generate-cert.js",
-    "test": "node test-api.js"
+    "test": "node test-api.js",
+    "test:e2e": "node test-e2e.js"
   },
   "dependencies": {
     "express": "^5.2.1",
     "multer": "^2.2.0"
   },
   "devDependencies": {
-    "mkcert": "^3.2.0"
+    "mkcert": "^3.2.0",
+    "puppeteer-core": "^25.7.0"
   }
 }
