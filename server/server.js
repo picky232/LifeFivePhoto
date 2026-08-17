@@ -62,6 +62,23 @@ app.post('/upload', upload.single('photo'), (req, res) => {
   }
 });
 
+// 정적 파일에도 라우트에도 걸리지 않은 화면 요청은 클라이언트가 만들어 둔
+// 404 페이지로 응답한다. 그냥 두면 Express 기본 영어 오류 페이지가 나가는데,
+// 부스 화면에 그게 뜨면 곤란하다. 상태 코드는 404 그대로 둔다.
+app.use((req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    return next();
+  }
+
+  const notFoundPage = path.join(CLIENT_DIR, '404.html');
+
+  if (!fs.existsSync(notFoundPage)) {
+    return next();
+  }
+
+  res.status(404).sendFile(notFoundPage);
+});
+
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     const message =

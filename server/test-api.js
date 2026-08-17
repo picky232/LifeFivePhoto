@@ -222,6 +222,20 @@ async function runTests() {
     expect(res.status, 404, '상태 코드');
   });
 
+  await check('GET /없는화면', '404는 클라이언트 404 페이지로 응답', async () => {
+    const res = await request('GET', encodeURI('/없는화면'));
+    expect(res.status, 404, '상태 코드');
+
+    const hasClient404 = fs.existsSync(path.join(__dirname, '..', 'client', '404.html'));
+
+    if (!hasClient404) {
+      return; // 클라이언트 빌드가 없으면 기본 404로 충분하다
+    }
+    if (res.body.includes('Cannot GET')) {
+      throw new Error('Express 기본 오류 페이지가 나갔습니다 (client/404.html 미사용)');
+    }
+  });
+
   await check('POST /upload', '정상 업로드 시 200과 저장 경로 반환', async () => {
     const res = await upload({ phone: '01012345678' });
     expect(res.status, 200, '상태 코드');
