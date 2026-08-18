@@ -49,7 +49,7 @@ export function BigButton({
       onClick={onClick}
       disabled={disabled}
       className={[
-        "min-h-[80px] rounded-sm px-9 text-2xl font-bold whitespace-nowrap",
+        "min-h-[max(44px,5rem)] rounded-sm px-9 text-2xl font-bold whitespace-nowrap",
         "transition-colors duration-75",
         "disabled:pointer-events-none disabled:opacity-25",
         wide ? "w-full" : "",

@@ -140,7 +140,7 @@ export function PrintingScreen({
         {frame && (
           <div
             className="border-ink/30 shrink-0 overflow-hidden border"
-            style={{ width: 200, aspectRatio: PAGE_RATIO }}
+            style={{ width: "12.5rem", aspectRatio: PAGE_RATIO }}
           >
             {/* 캔버스로 만든 결과물이라 next/image 대신 원본을 그대로 쓴다 */}
             {/* eslint-disable-next-line @next/next/no-img-element */}

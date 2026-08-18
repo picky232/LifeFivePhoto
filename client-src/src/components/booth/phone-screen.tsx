@@ -72,7 +72,7 @@ export function PhoneScreen({
       </div>
 
       {/* 숫자판 — 칸 사이를 검정 선으로 나눈 하나의 격자 */}
-      <div className="border-ink mx-auto mt-9 grid w-full max-w-2xl grid-cols-3 gap-px border bg-current">
+      <div className="keypad border-ink mx-auto mt-9 grid w-full max-w-2xl grid-cols-3 gap-px border bg-current">
         {KEYS.map((k) => {
           const isAction = k === "clear" || k === "back";
           return (
@@ -81,7 +81,7 @@ export function PhoneScreen({
               type="button"
               onClick={() => press(k)}
               className={[
-                "bg-paper active:bg-mint min-h-[92px] transition-colors duration-75",
+                "bg-paper active:bg-mint min-h-[max(44px,5.75rem)] transition-colors duration-75",
                 isAction ? "text-ink-60 text-lg font-bold" : "headline text-ink text-5xl",
               ].join(" ")}
             >
