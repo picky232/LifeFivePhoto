@@ -71,21 +71,16 @@ export function SelectScreen({
         </div>
       </div>
 
-      <div className="picks mt-7 grid grid-cols-4 gap-3">
+      <div className="mt-7 grid grid-cols-4 gap-3">
         {shots.map((shot, i) => {
           const order = picked.indexOf(i);
           const isPicked = order >= 0;
           const dept = isPicked ? DEPARTMENTS[order] : null;
 
           return (
-            <button
-              key={i}
-              type="button"
-              onClick={() => toggle(i)}
-              className="flex min-h-0 flex-col text-left"
-            >
+            <button key={i} type="button" onClick={() => toggle(i)} className="text-left">
               <div
-                className="pick-photo relative overflow-hidden"
+                className="relative overflow-hidden"
                 style={{
                   aspectRatio: CUT_RATIO,
                   outline: isPicked ? `4px solid ${dept?.accent}` : "none",
@@ -125,8 +120,7 @@ export function SelectScreen({
         })}
       </div>
 
-      {/* 가로에서는 사진 격자가 남는 세로를 가져가므로 이 채우개를 접는다 */}
-      <div className="spacer flex-1" />
+      <div className="flex-1" />
 
       {nudge && (
         <p className="bg-mint text-ink mt-6 px-6 py-4 text-xl font-bold">

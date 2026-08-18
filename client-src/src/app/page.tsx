@@ -109,6 +109,16 @@ export default function BoothPage() {
 
   const printDone = useCallback(() => setStep("done"), []);
 
+  /* 지금 어느 단계인지 html 에 남긴다.
+     고르는 화면은 사진 여덟 장이 자리를 많이 써서 가로에서 글자를 더
+     줄여야 한다. 화면마다 크기를 달리하려면 뿌리에 표시가 필요하다. */
+  useEffect(() => {
+    document.documentElement.dataset.step = step;
+    return () => {
+      delete document.documentElement.dataset.step;
+    };
+  }, [step]);
+
   /* ── 방치 감지 ────────────────────────────────────────── */
   useEffect(() => {
     if (!RESETTABLE.includes(step)) return;
