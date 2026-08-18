@@ -52,7 +52,7 @@ export function PhoneScreen({
         right={<span className="text-lg font-semibold">마지막 단계</span>}
       />
 
-      <div className="mt-8 flex items-end justify-between gap-10">
+      <div className="mt-8 flex flex-wrap items-end justify-between gap-x-10 gap-y-3">
         <div>
           <h1 className="headline text-7xl">번호를 눌러주세요</h1>
           <p className="text-ink-60 mt-3 max-w-xl text-xl leading-relaxed">
