@@ -70,7 +70,7 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
             {MADE_BY.map((group) => (
               <p key={group.dept} className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                 <span className="text-ink/60 text-lg font-semibold">{group.dept}</span>
-                <span className="text-2xl font-bold">{group.names.join(", ")}</span>
+                <span className="text-2xl font-bold">{group.names.join(" ")}</span>
               </p>
             ))}
           </div>
