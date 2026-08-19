@@ -22,11 +22,11 @@ const monoFont = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "분당경영고 인생네컷",
+  title: "분당경영고 분경오컷",
   description: "분당경영고 학과 홍보용 5컷 포토부스",
   appleWebApp: {
     capable: true,
-    title: "인생네컷",
+    title: "분경오컷",
     statusBarStyle: "default",
   },
 };

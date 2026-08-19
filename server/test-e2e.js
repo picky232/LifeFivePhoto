@@ -267,14 +267,14 @@ async function run() {
 
   // 합성은 화면이 뜬 뒤 비동기로 끝난다. 결과가 붙을 때까지 기다린다.
   try {
-    await page.waitForSelector('img[alt="완성된 인생네컷"]', { timeout: 60000 });
+    await page.waitForSelector('img[alt="완성된 분경오컷"]', { timeout: 60000 });
   } catch (err) {
     const shown = await page.evaluate(() => document.body.innerText);
     throw new Error(`합성 결과가 나오지 않았습니다. 화면 내용: ${shown.slice(0, 300)}`);
   }
 
   const frameSize = await page.evaluate(async () => {
-    const img = document.querySelector('img[alt="완성된 인생네컷"]');
+    const img = document.querySelector('img[alt="완성된 분경오컷"]');
     if (!img) return null;
     if (!img.complete) {
       await new Promise((resolve) => {

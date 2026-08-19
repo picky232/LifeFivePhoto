@@ -54,7 +54,7 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
           className="headline animate-slide mt-4 text-[9rem]"
           style={{ animationDelay: "700ms" }}
         >
-          인생네컷
+          분경오컷
         </h1>
 
         <div

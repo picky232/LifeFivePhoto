@@ -12,7 +12,7 @@ import { DEPARTMENTS, SCHOOL_NAME, SCHOOL_SYMBOL } from "./departments";
  *
  * 바탕은 검정이다. 학교 행사장 화면은 종이색이 잘 읽히지만,
  * 종이에 실제로 찍히는 건 사진이라 어두운 바탕이라야 사진이 산다.
- * (인생네컷 계열 프레임이 대체로 검정인 것도 같은 이유다.)
+ * (분경오컷 계열 프레임이 대체로 검정인 것도 같은 이유다.)
  */
 
 /** 본문용 — 한글이 깨지지 않는 조합. 아이패드는 앞의 것, 윈도우는 뒤의 것을 쓴다. */
@@ -135,7 +135,7 @@ function drawBrand(
 
   ctx.fillStyle = MINT;
   ctx.font = `400 ${Math.round(w * 0.205)}px ${displayFont}`;
-  ctx.fillText("인생네컷", x + padX, y + top * 0.54);
+  ctx.fillText("분경오컷", x + padX, y + top * 0.54);
 
   const now = new Date();
   const stamp = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(
@@ -180,7 +180,7 @@ export async function composeFrame(shots: string[]): Promise<string> {
   // 아직 안 받아진 상태로 그리면 조용히 기본 글꼴로 찍힌다.
   if (family) {
     try {
-      await document.fonts.load(`400 120px ${family}`, "인생네컷");
+      await document.fonts.load(`400 120px ${family}`, "분경오컷");
     } catch {
       // 폰트를 못 받아도 기본 글꼴로 그리면 된다
     }

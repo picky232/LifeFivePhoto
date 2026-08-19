@@ -213,7 +213,7 @@ export default function DiagnosticsPage() {
     >
       <header className="border-ink flex items-start justify-between gap-4 border-b pb-4">
         <div>
-          <p className="text-ink-60 text-sm font-bold">분당경영고 인생네컷 · 운영자</p>
+          <p className="text-ink-60 text-sm font-bold">분당경영고 분경오컷 · 운영자</p>
           <h1 className="headline mt-1 text-4xl">환경 확인</h1>
           <p className="text-ink-60 mt-1 text-sm">
             전체화면으로 뜨는지, 카메라가 열리는지 이 화면에서 판정합니다.
