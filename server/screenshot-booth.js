@@ -163,7 +163,7 @@ async function walk(orientation) {
   // 미리보기 화면의 버튼이 "선택 완료" 다. 순서를 바꾸면 못 찾는다.
   await clickByText(page, '이 사진으로 만들기');
   await waitForText(page, '이렇게 나옵니다');
-  await page.waitForSelector('img[alt="완성된 인생네컷"]', { timeout: 60000 });
+  await page.waitForSelector('img[alt="완성된 분경오컷"]', { timeout: 60000 });
   await sleep(600);
   await capture(page, dir, 7, 'preview');
 
