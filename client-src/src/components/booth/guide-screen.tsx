@@ -59,7 +59,7 @@ export function GuideScreen({
             className="border-ink/20 grid grid-cols-[13rem_1fr] gap-8 border-t py-8"
           >
             {/* "가져가기"는 4글자라 48px × 4 = 192px. 칸을 10rem(160px)로 두면 두 줄로 접힌다. */}
-            <p className="headline text-mint text-5xl whitespace-nowrap">{s.title}</p>
+            <p className="headline text-mint-deep text-5xl whitespace-nowrap">{s.title}</p>
             <div>
               <p className="text-3xl leading-tight font-bold">{s.lead}</p>
               <p className="text-ink-60 mt-2 max-w-xl text-xl leading-relaxed">
