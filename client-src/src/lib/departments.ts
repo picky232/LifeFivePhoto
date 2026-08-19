@@ -79,7 +79,7 @@ export const DEPARTMENTS: Department[] = [
     id: "design",
     name: "그래픽디자인과",
     short: "그래픽디자인",
-    accent: "#3ddc97",
+    accent: "#81d8d0",
     accentMeaning: "부스 강조색",
     tagline: "보이는 것을 설계한다",
     mascot: "/brand/dept-design.png",
