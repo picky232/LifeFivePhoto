@@ -64,7 +64,7 @@ export function PreviewScreen({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={composed}
-              alt="완성된 분경오컷"
+              alt="완성된 분경5컷"
               className="h-full w-full object-contain"
             />
           ) : (

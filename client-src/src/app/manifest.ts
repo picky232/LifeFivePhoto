@@ -6,8 +6,8 @@ export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "분당경영고 분경오컷",
-    short_name: "분경오컷",
+    name: "분당경영고 분경5컷",
+    short_name: "분경5컷",
     description: "분당경영고 학과 홍보용 5컷 포토부스",
     start_url: "/",
     display: "standalone",

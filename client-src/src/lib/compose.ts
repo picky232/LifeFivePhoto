@@ -12,7 +12,7 @@ import { DEPARTMENTS, SCHOOL_NAME, SCHOOL_SYMBOL } from "./departments";
  *
  * 바탕은 검정이다. 학교 행사장 화면은 종이색이 잘 읽히지만,
  * 종이에 실제로 찍히는 건 사진이라 어두운 바탕이라야 사진이 산다.
- * (분경오컷 계열 프레임이 대체로 검정인 것도 같은 이유다.)
+ * (분경5컷 계열 프레임이 대체로 검정인 것도 같은 이유다.)
  */
 
 /** 본문용 — 한글이 깨지지 않는 조합. 아이패드는 앞의 것, 윈도우는 뒤의 것을 쓴다. */
@@ -95,18 +95,41 @@ function drawBand(
   ctx.fillStyle = accent;
   ctx.fillRect(x, by, barW, BAND_H);
 
+  // 마스코트가 오른쪽에 서므로 글자가 쓸 수 있는 폭이 그만큼 줄어든다.
+  // 자리를 먼저 잡아두고 글자 크기를 거기에 맞춘다.
+  let mascotW = 0;
+  let mascotH = 0;
+
+  if (mascot) {
+    mascotH = Math.round(BAND_H * 2.1);
+    mascotW = Math.round((mascot.naturalWidth / mascot.naturalHeight) * mascotH);
+  }
+
+  const textX = x + barW + 20;
+  const textRoom = x + w - 16 - mascotW - 12 - textX;
+
+  // 캔버스의 fillText 는 넘쳐도 알아서 줄이거나 접지 않는다.
+  // 학과 이름 길이가 제각각이라(5~8자) 재보고 들어갈 때까지 줄인다.
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = `700 ${Math.round(BAND_H * 0.42)}px ${FONT}`;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText(text, x + barW + 20, by + BAND_H / 2 + 2);
+
+  let fontSize = Math.round(BAND_H * 0.42);
+  const minSize = Math.round(BAND_H * 0.26);
+
+  while (fontSize > minSize) {
+    ctx.font = `700 ${fontSize}px ${FONT}`;
+    if (ctx.measureText(text).width <= textRoom) break;
+    fontSize -= 1;
+  }
+
+  ctx.font = `700 ${fontSize}px ${FONT}`;
+  ctx.fillText(text, textX, by + BAND_H / 2 + 2);
 
   // 마스코트는 띠를 딛고 서서 사진 쪽으로 올라온다.
   // 사진 위에 떠 있는 것보다 자리가 분명하고, 얼굴에서도 멀어진다.
   if (mascot) {
-    const mh = Math.round(BAND_H * 2.1);
-    const mw = Math.round((mascot.naturalWidth / mascot.naturalHeight) * mh);
-    ctx.drawImage(mascot, x + w - 16 - mw, by + BAND_H - mh, mw, mh);
+    ctx.drawImage(mascot, x + w - 16 - mascotW, by + BAND_H - mascotH, mascotW, mascotH);
   }
 }
 
@@ -135,7 +158,7 @@ function drawBrand(
 
   ctx.fillStyle = MINT;
   ctx.font = `400 ${Math.round(w * 0.205)}px ${displayFont}`;
-  ctx.fillText("분경오컷", x + padX, y + top * 0.54);
+  ctx.fillText("분경5컷", x + padX, y + top * 0.54);
 
   const now = new Date();
   const stamp = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(
@@ -180,7 +203,7 @@ export async function composeFrame(shots: string[]): Promise<string> {
   // 아직 안 받아진 상태로 그리면 조용히 기본 글꼴로 찍힌다.
   if (family) {
     try {
-      await document.fonts.load(`400 120px ${family}`, "분경오컷");
+      await document.fonts.load(`400 120px ${family}`, "분경5컷");
     } catch {
       // 폰트를 못 받아도 기본 글꼴로 그리면 된다
     }

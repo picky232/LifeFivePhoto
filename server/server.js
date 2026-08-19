@@ -186,7 +186,7 @@ function localAddresses() {
 
 function printStartup(protocol) {
   console.log('');
-  console.log(`인생오컷 서버 실행 중 (${protocol.toUpperCase()}, 포트 ${PORT})`);
+  console.log(`분경5컷 서버 실행 중 (${protocol.toUpperCase()}, 포트 ${PORT})`);
   console.log(`저장 위치: ${OUTPUT_DIR}`);
   console.log('아이패드 접속 주소 후보:');
 
