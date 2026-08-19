@@ -162,6 +162,12 @@ async function walk(orientation) {
   // 고르기 화면의 버튼은 "이 사진으로 만들기",
   // 미리보기 화면의 버튼이 "선택 완료" 다. 순서를 바꾸면 못 찾는다.
   await clickByText(page, '이 사진으로 만들기');
+
+  // 프레임 고르기가 사이에 들어간다. 견본을 그리는 데 시간이 걸리므로
+  // 버튼이 열릴 때까지 기다렸다가 누른다.
+  await waitForText(page, '어떤 프레임으로 할까요');
+  await clickByText(page, '이 프레임으로', { timeout: 90000 });
+
   await waitForText(page, '이렇게 나옵니다');
   await page.waitForSelector('img[alt="완성된 분경5컷"]', { timeout: 60000 });
   await sleep(600);
