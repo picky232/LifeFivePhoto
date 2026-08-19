@@ -11,7 +11,7 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 Write-Host ""
 Write-Host "==============================================="
-Write-Host "  인생오컷 부스 종료"
+Write-Host "  분경5컷 부스 종료"
 Write-Host "==============================================="
 Write-Host ""
 

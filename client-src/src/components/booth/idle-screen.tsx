@@ -58,7 +58,7 @@ export function IdleScreen({
           <span className="text-xl font-bold">학과 홍보 포토부스</span>
         </div>
 
-        <h1 className="headline mt-10 text-[10rem]">분경오컷</h1>
+        <h1 className="headline mt-10 text-[10rem]">분경5컷</h1>
 
         <p className="mt-6 max-w-2xl text-3xl leading-snug font-semibold">
           {SHOT_COUNT}장을 찍고 {PICK_COUNT}장을 골라 그 자리에서 인화합니다.

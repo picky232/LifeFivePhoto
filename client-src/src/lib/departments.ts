@@ -49,15 +49,6 @@ export const DEPARTMENTS: Department[] = [
     mascot: "/brand/dept-accounting.png",
   },
   {
-    id: "hotel",
-    name: "호텔경영과",
-    short: "호텔경영",
-    accent: "#f48020",
-    accentMeaning: "열정과 에너지",
-    tagline: "사람을 맞이하는 일",
-    mascot: "/brand/dept-hotel.png",
-  },
-  {
     id: "smart",
     name: "스마트경영과",
     short: "스마트경영",
@@ -76,6 +67,15 @@ export const DEPARTMENTS: Department[] = [
     mascot: "/brand/dept-it.png",
   },
   {
+    id: "hotel",
+    name: "스마트호텔관광과",
+    short: "스마트호텔",
+    accent: "#f48020",
+    accentMeaning: "열정과 에너지",
+    tagline: "사람을 맞이하는 일",
+    mascot: "/brand/dept-hotel.png",
+  },
+  {
     id: "design",
     name: "그래픽디자인과",
     short: "그래픽디자인",
@@ -92,5 +92,11 @@ export const SCHOOL_SHORT = "분당경영고";
 /** 학교 심벌마크 — 성장하는 지식의 탑 */
 export const SCHOOL_SYMBOL = "/brand/symbol.png";
 
-/** 스플래시에 올라가는 만든 사람. 적힌 순서대로 나온다. */
-export const MADE_BY = ["신지호", "윤지원"];
+/**
+ * 스플래시에 올라가는 만든 사람. 적힌 순서대로 나온다.
+ * 학과별로 묶어서 한 줄씩 보여준다.
+ */
+export const MADE_BY: { dept: string; names: string[] }[] = [
+  { dept: "인공지능개발과", names: ["신지호", "윤지원"] },
+  { dept: "그래픽디자인과", names: ["김도영", "조서연"] },
+];

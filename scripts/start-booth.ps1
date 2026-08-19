@@ -13,7 +13,7 @@ $serverDir = Join-Path $rootDir 'server'
 
 Write-Host ""
 Write-Host "==============================================="
-Write-Host "  인생오컷 부스 시작"
+Write-Host "  분경5컷 부스 시작"
 Write-Host "==============================================="
 Write-Host ""
 

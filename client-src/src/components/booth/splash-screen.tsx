@@ -54,7 +54,7 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
           className="headline animate-slide mt-4 text-[9rem]"
           style={{ animationDelay: "700ms" }}
         >
-          분경오컷
+          분경5컷
         </h1>
 
         <div
@@ -64,14 +64,16 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
           <p className="text-ink/60 text-lg font-semibold tracking-[0.2em]">
             만든 사람
           </p>
-          <p className="mt-1.5 flex items-center gap-4 text-2xl font-bold">
-            {MADE_BY.map((name, i) => (
-              <span key={name} className="flex items-center gap-4">
-                {i > 0 && <span className="text-ink/30">·</span>}
-                {name}
-              </span>
+          {/* 학과가 앞에 오고 그 아래 이름이 온다.
+              한 줄에 몰아넣으면 어느 이름이 어느 학과인지 읽히지 않는다. */}
+          <div className="mt-2 flex flex-col gap-2">
+            {MADE_BY.map((group) => (
+              <p key={group.dept} className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <span className="text-ink/60 text-lg font-semibold">{group.dept}</span>
+                <span className="text-2xl font-bold">{group.names.join(", ")}</span>
+              </p>
             ))}
-          </p>
+          </div>
         </div>
       </button>
     </Screen>
