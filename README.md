@@ -218,7 +218,7 @@ cd server
 npm run test:e2e
 ```
 
-브라우저를 띄워 촬영부터 저장까지 실제로 한 바퀴 돌린다. 8장 촬영이 10초 간격이라 약 100초 걸린다.
+브라우저를 띄워 촬영부터 저장까지 실제로 한 바퀴 돌린다. 8장 촬영이 5초 간격이라 1분 안쪽이다.
 
 설치된 Chrome 을 그대로 쓴다(`puppeteer-core`). 카메라는 Chrome 의 가짜 장치를 써서 권한 창이 뜨지 않는다. 서버는 HTTP 로 띄우고 `localhost` 로 접속하는데, Chrome 이 `http://localhost` 를 보안 컨텍스트로 취급하므로 인증서 없이도 `getUserMedia` 가 열린다.
 

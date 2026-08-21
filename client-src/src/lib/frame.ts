@@ -82,8 +82,15 @@ export const BRAND_CELL = cell(1, 2);
 export const SHOT_COUNT = 8;
 export const PICK_COUNT = SLOTS.length; // 5
 
-/** 자동 촬영 간격(초) — 설계서 10초 */
-export const SHOOT_INTERVAL = 10;
+/**
+ * 자동 촬영 간격(초).
+ *
+ * 처음에는 10초였는데 8장을 찍는 동안 80초가 걸려, 뒤로 갈수록 자세가 풀리고
+ * 줄이 밀렸다. 5초면 포즈를 바꿀 만큼은 되면서 한 바퀴가 절반으로 준다.
+ *
+ * 안내 화면과 촬영 화면의 문구·막대는 이 값을 읽어 쓴다. 여기만 고치면 된다.
+ */
+export const SHOOT_INTERVAL = 5;
 
 /**
  * 인쇄 요청 뒤 완료 화면으로 넘어가기까지 기다리는 시간(초).
