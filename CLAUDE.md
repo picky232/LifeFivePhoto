@@ -36,5 +36,32 @@ src/auth.ts 수정. 토큰 만료 비교가 `<` 라서 경계값에서 통과함
 
 ## 프로젝트 메모
 
-- 현재 프로젝트는 비어 있음. 구조가 잡히면 이 문서에 빌드·테스트·실행 명령을 추가할 것.
 - 언어: 한국어로 응답.
+- 아이패드 웹에서 사진 8장을 찍어 5장을 고르고, 프레임을 얹어 노트북에 저장하는 로컬 도구. 상세는 `기획서.md`, 실행 방법은 `README.md`.
+
+### 자주 쓰는 명령
+
+```bash
+# 서버 (노트북)
+cd server && npm install
+npm start                 # 3000번 포트
+npm test                  # API 명세 대조 (16항목)
+npm run test:e2e          # 부스 흐름 통합 (10단계, 크롬 필요)
+
+# 클라이언트
+cd client-src && pnpm install
+pnpm lint
+pnpm build
+robocopy out ..\client /MIR   # 빌드 결과를 client/ 로 미러링
+
+# 프레임
+node scripts/check-frame.js client-src/public/frames/classic.png
+node docs/frame-spec/make-guide.js
+```
+
+`client/` 는 `client-src/` 의 빌드 결과물이고 커밋해 둔다. **클라이언트를 고쳤으면 빌드와 미러링까지 해야 반영된다.**
+
+### 손대면 안 되는 것
+
+- `server/certs/`, `output/` 은 저장소에서 제외한다. 키와 손님 사진이 들어 있다.
+- 프레임 칸 좌표의 기준은 `client-src/src/lib/frame.ts` 의 `SLOTS` 하나다. 문서·도구는 그 값을 따라간다.
