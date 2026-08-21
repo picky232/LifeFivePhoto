@@ -83,7 +83,6 @@ export function FrameScreen({
                 style={{
                   aspectRatio: PAGE_RATIO,
                   outline: on ? "6px solid var(--color-ink)" : "1px solid rgba(10,10,10,0.2)",
-                  outlineOffset: on ? "0" : "0",
                 }}
               >
                 {url ? (
