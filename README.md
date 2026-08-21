@@ -256,6 +256,7 @@ curl.exe -s --ssl-revoke-best-effort --cacert $ca -X POST https://192.168.137.1:
 | 캔버스 | 1200 × 1800 px, 300dpi, sRGB |
 | 형식 | PNG-24 (알파 채널 포함) |
 | 실치수 | 101.6 × 152.4 mm (4 × 6 인치) |
+| 인화 용지 | 100 × 148 mm — 캔버스보다 작아 가장자리가 잘린다 |
 
 사진 칸 다섯 자리. 좌표는 `client-src/src/lib/frame.ts` 의 `SLOTS` 가 기준이다.
 

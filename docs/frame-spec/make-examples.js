@@ -106,6 +106,7 @@ async function main() {
 
       const out = {};
       const chanX = G.channel.x + G.channel.w / 2;
+      const S = G.safeBox; // 잘려도 남는 자리
 
       // ── 예시 A — 학과 띠 (어두운 바탕) ───────────────────────
       {
@@ -120,22 +121,18 @@ async function main() {
 
         g.strokeStyle = 'rgba(129,216,208,0.30)';
         g.lineWidth = 2;
-        g.strokeRect(22, 22, G.W - 44, G.H - 44);
+        g.strokeRect(S.x + 6, S.y + 6, S.w - 12, S.h - 12);
 
-        text(g, '분당경영고등학교 학과 홍보 부스', G.W / 2, 72, {
+        text(g, '분당경영고등학교 학과 홍보 부스', G.W / 2, S.y + 46, {
           size: 24, color: 'rgba(240,238,233,0.55)', align: 'center', track: 5,
         });
 
         // 좌우 여백에 학과 마스코트 — 디자이너가 다른 물품으로 바꿀 자리.
         // 여백이 80px 이라 마스코트도 그만큼 좁게 들어간다.
-        const spots = [
-          { i: 0, x: 8, y: 320, w: 64, h: 92 },
-          { i: 3, x: G.W - 72, y: 300, w: 64, h: 92 },
-          { i: 1, x: 8, y: 880, w: 64, h: 92 },
-          { i: 4, x: G.W - 72, y: 860, w: 64, h: 92 },
-          { i: 2, x: 8, y: 1400, w: 64, h: 92 },
-        ];
-        for (const s of spots) fit(g, mascots[s.i], s.x, s.y, s.w, s.h, 0.26);
+        // 좌우 여백은 52px 뿐이라 마스코트가 안 들어간다. 잘리지 않는
+        // 아래 여백에 한 줄로 늘어놓는다.
+        const step = S.w / 5;
+        mascots.forEach((m, i) => fit(g, m, S.x + i * step + step / 2 - 31, 1552, 60, 72, 0.26));
 
         // 가운데 통로 — 점선과 학과 색 점
         g.save();
@@ -174,21 +171,21 @@ async function main() {
         g.lineWidth = 2;
         g.strokeRect(b.x - 6, b.y - 6, b.w + 12, b.h + 12);
 
-        fit(g, symbol, b.x + b.w / 2 - 56, b.y + 46, 112, 112);
-        text(g, '분경5컷', b.x + b.w / 2, b.y + 288, { size: 82, color: MINT, align: 'center', weight: 'bold' });
+        fit(g, symbol, b.x + b.w / 2 - 48, b.y + 34, 96, 96);
+        text(g, '분경5컷', b.x + b.w / 2, b.y + 236, { size: 66, color: MINT, align: 'center', weight: 'bold' });
         g.fillStyle = 'rgba(129,216,208,0.55)';
-        g.fillRect(b.x + b.w / 2 - 58, b.y + 316, 116, 3);
-        text(g, '분당경영고등학교', b.x + b.w / 2, b.y + 372, {
+        g.fillRect(b.x + b.w / 2 - 50, b.y + 262, 100, 3);
+        text(g, '분당경영고등학교', b.x + b.w / 2, b.y + 312, {
           size: 24, color: 'rgba(240,238,233,0.55)', align: 'center', track: 3,
         });
 
         // 아래 여백 학과 색 띠
-        const bandW = (G.W - 120) / 5;
+        const bandW = S.w / 5;
         DEPTS.forEach((d, i) => {
           g.fillStyle = d.color;
-          g.fillRect(60 + i * bandW, 1712, bandW - 6, 9);
+          g.fillRect(S.x + i * bandW, 1638, bandW - 6, 7);
         });
-        text(g, 'BUNDANG GYEONGYEONG HIGH SCHOOL', G.W / 2, 1764, {
+        text(g, 'BUNDANG GYEONGYEONG HIGH SCHOOL', G.W / 2, 1676, {
           size: 17, color: 'rgba(240,238,233,0.32)', align: 'center', track: 4,
         });
 
@@ -206,17 +203,17 @@ async function main() {
 
         // 좌우 필름 구멍 — 여백 80px 안에 들어가도록 좁게
         g.fillStyle = '#e4dfd5';
-        for (let y = 60; y < G.H - 50; y += 74) {
-          for (const cx of [18, G.W - 58]) {
+        for (let y = S.y + 8; y < S.y + S.h - 30; y += 68) {
+          for (const cx of [S.x + 7, S.x + S.w - 43]) {
             g.beginPath();
-            g.roundRect(cx, y, 40, 28, 8);
+            g.roundRect(cx, y, 36, 26, 7);
             g.fill();
           }
         }
 
         g.fillStyle = MINT;
-        g.fillRect(G.W / 2 - 90, 48, 180, 4);
-        text(g, '분당경영고등학교 학과 홍보 부스', G.W / 2, 98, {
+        g.fillRect(G.W / 2 - 90, S.y + 22, 180, 4);
+        text(g, '분당경영고등학교 학과 홍보 부스', G.W / 2, S.y + 70, {
           size: 22, color: '#8b8478', align: 'center', track: 4,
         });
 
@@ -250,20 +247,20 @@ async function main() {
         g.lineWidth = 2;
         g.strokeRect(b.x - 5, b.y - 5, b.w + 10, b.h + 10);
 
-        fit(g, symbol, b.x + b.w / 2 - 54, b.y + 48, 108, 108);
-        text(g, '분경5컷', b.x + b.w / 2, b.y + 288, { size: 82, color: '#1c1f22', align: 'center', weight: 'bold' });
+        fit(g, symbol, b.x + b.w / 2 - 46, b.y + 36, 92, 92);
+        text(g, '분경5컷', b.x + b.w / 2, b.y + 236, { size: 66, color: '#1c1f22', align: 'center', weight: 'bold' });
         g.fillStyle = MINT;
-        g.fillRect(b.x + b.w / 2 - 58, b.y + 316, 116, 6);
-        text(g, '분당경영고등학교', b.x + b.w / 2, b.y + 372, {
+        g.fillRect(b.x + b.w / 2 - 50, b.y + 262, 100, 5);
+        text(g, '분당경영고등학교', b.x + b.w / 2, b.y + 312, {
           size: 24, color: '#8b8478', align: 'center', track: 3,
         });
 
-        const bandW = (G.W - 300) / 5;
+        const bandW = S.w / 5;
         DEPTS.forEach((d, i) => {
           g.fillStyle = d.color;
-          g.fillRect(150 + i * bandW, 1730, bandW - 8, 8);
+          g.fillRect(S.x + i * bandW, 1638, bandW - 8, 7);
         });
-        text(g, '2026 학과 홍보 부스', G.W / 2, 1774, {
+        text(g, '2026 학과 홍보 부스', G.W / 2, 1672, {
           size: 18, color: '#a9a294', align: 'center', track: 3,
         });
 
