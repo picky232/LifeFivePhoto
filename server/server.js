@@ -71,8 +71,7 @@ app.post('/upload', upload.single('photo'), (req, res) => {
     const targetDir = path.join(OUTPUT_DIR, dateFolder);
     fs.mkdirSync(targetDir, { recursive: true });
 
-    const fileName = uniqueFileName(targetDir, phone);
-    fs.writeFileSync(path.join(targetDir, fileName), req.file.buffer);
+    const fileName = writeUnique(targetDir, phone, req.file.buffer);
 
     const savedPath = `${dateFolder}/${fileName}`;
     console.log(`저장 완료: ${savedPath} (${req.file.buffer.length} bytes)`);
@@ -137,21 +136,33 @@ function todayFolder() {
   return `${year}-${month}-${day}`;
 }
 
+/** 같은 번호로 몇 번까지 다시 찍는 것을 받아줄지 */
+const MAX_NAME_TRIES = 1000;
+
 /**
  * 같은 날 같은 번호로 다시 촬영한 경우 기존 파일을 덮어쓰지 않고
- * 01012345678_2.png 형태로 번호를 붙인다.
+ * 01012345678_2.png 형태로 번호를 붙여 저장하고, 쓴 이름을 돌려준다.
+ *
+ * 이름을 먼저 고르고 나중에 쓰면 그 사이에 다른 쪽이 같은 이름을 채갈 수
+ * 있다. 한 프로세스 안에서는 동기 호출이라 끼어들 틈이 없지만, 서버가 두 개
+ * 떠서 같은 폴더를 쓰면 실제로 한쪽이 사라진다 — 20건을 동시에 넣어보니
+ * 한 건이 덮어써졌고, 서버는 그 건에도 "저장 성공"이라고 답했다.
+ *
+ * 'wx' 는 파일이 이미 있으면 쓰지 않고 EEXIST 를 던진다. 이름을 고르는 일과
+ * 쓰는 일이 한 동작이 되어, 진 쪽은 다음 번호로 다시 시도한다.
  */
-function uniqueFileName(dir, phone) {
-  if (!fs.existsSync(path.join(dir, `${phone}.png`))) {
-    return `${phone}.png`;
+function writeUnique(dir, phone, buffer) {
+  for (let index = 1; index <= MAX_NAME_TRIES; index += 1) {
+    const name = index === 1 ? `${phone}.png` : `${phone}_${index}.png`;
+    try {
+      fs.writeFileSync(path.join(dir, name), buffer, { flag: 'wx' });
+      return name;
+    } catch (err) {
+      if (err.code !== 'EEXIST') throw err;
+    }
   }
 
-  let index = 2;
-  while (fs.existsSync(path.join(dir, `${phone}_${index}.png`))) {
-    index += 1;
-  }
-
-  return `${phone}_${index}.png`;
+  throw new Error(`${phone} 로 쓸 이름을 못 찾았습니다 (${MAX_NAME_TRIES}번 시도)`);
 }
 
 /**
