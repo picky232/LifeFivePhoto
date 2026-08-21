@@ -4,9 +4,18 @@
  * 화면 미리보기(DOM)와 인쇄용 합성(canvas)이 **같은 숫자**를 쓴다.
  * 그래서 미리보기에서 보인 대로 종이에 나온다. 규격이 바뀌면 여기만 고친다.
  *
- * ⚠️ 미확정: 설계서에 인화 4×6인치와 전체 프레임 4×5인치가 같이 적혀 있다.
- *    CP1500 엽서 용지가 100×148mm(≒4×6)이므로 일단 4×6으로 잡았다.
- *    4×5로 확정되면 PAGE_INCH.h 만 5로 바꾸면 화면·합성이 함께 따라온다.
+ * ── 종이와 캔버스가 다르다 ────────────────────────────────
+ * 인화 용지는 100×148mm, 캔버스는 4×6인치(101.6×152.4mm)다. 용지가 더 작아
+ * 가장자리가 잘리고, 인화기 여백이 더 붙는다. 세로가 더 많이 잘린다
+ * (4.4mm 대 1.6mm).
+ *
+ * 캔버스를 용지에 맞추지 않는 이유는 촬영이 이 비율로 사진을 잘라 두기
+ * 때문이다. 캔버스만 바꾸면 화면에서 본 구도와 종이에 나온 구도가 어긋난다.
+ *
+ * 대신 위아래 7mm · 좌우 4mm 를 흰 테로 비우고, 칸을 그 안쪽에만 둔다.
+ * 이 값은 docs/frame-spec/geom.js 와 같아야 한다 — 그쪽은 외주에 넘길
+ * 규격서를 그리고, 이쪽은 실제로 사진을 채운다. 둘이 갈라지면 종이에
+ * 나온 자리와 그림의 구멍이 어긋난다. scripts/check-frame.js 로 잰다.
  */
 
 /** 인쇄 해상도. 300dpi면 4×6이 1200×1800px. */
@@ -24,17 +33,19 @@ export const PAGE = {
 /** 종이 가로세로비. 화면에서 미리보기 박스를 만들 때 쓴다. */
 export const PAGE_RATIO = PAGE.w / PAGE.h;
 
-// 여백과 간격을 줄여 사진을 키웠다. 간격이 넓으면 사진 다섯 장이
-// 한 벌로 안 보이고 각각 떨어진 네모로 읽힌다.
-const MARGIN = 42; // 종이 테두리 여백
-const GAP = 18; // 컷 사이 간격
-const COLS = 2;
-const ROWS = 3;
+/** 잘려나가는 자리 — 흰색으로 비운다. 세로가 더 많이 잘려 위아래를 넓게 잡았다 */
+const SAFE_X = 47; // 4mm
+const SAFE_Y = 83; // 7mm
 
-/** 컷 한 칸 크기 — 위 여백/간격에서 딱 나누어떨어지게 골랐다 (549×560) */
+const MARGIN_X = 58; // 흰 테 안쪽 좌우 여백
+const MARGIN_Y = 72; // 흰 테 안쪽 위아래 여백
+const GAP_X = 90; // 컷 사이 가로 간격
+const GAP_Y = 100; // 컷 사이 세로 간격
+
+/** 컷 한 칸 크기 — 위 값들에서 딱 나누어떨어지게 골랐다 (450×430) */
 export const CUT = {
-  w: (PAGE.w - MARGIN * 2 - GAP * (COLS - 1)) / COLS,
-  h: (PAGE.h - MARGIN * 2 - GAP * (ROWS - 1)) / ROWS,
+  w: (PAGE.w - SAFE_X * 2 - MARGIN_X * 2 - GAP_X) / 2,
+  h: (PAGE.h - SAFE_Y * 2 - MARGIN_Y * 2 - GAP_Y * 2) / 3,
 } as const;
 
 /** 컷 가로세로비. 카메라 미리보기와 썸네일을 이 비율로 잘라야 어긋나지 않는다. */
@@ -62,8 +73,8 @@ export type Slot = {
  */
 function cell(col: number, row: number) {
   return {
-    x: MARGIN + col * (CUT.w + GAP),
-    y: MARGIN + row * (CUT.h + GAP),
+    x: SAFE_X + MARGIN_X + col * (CUT.w + GAP_X),
+    y: SAFE_Y + MARGIN_Y + row * (CUT.h + GAP_Y),
     w: CUT.w,
     h: CUT.h,
   };

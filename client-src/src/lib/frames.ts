@@ -31,13 +31,13 @@ export const FRAMES: Frame[] = [
   {
     id: "classic",
     name: "검정",
-    note: "사진이 도드라지는 기본 프레임",
+    note: "어두운 바탕에 학과 색 띠",
     image: "/frames/classic.png",
   },
   {
     id: "paper",
-    name: "종이",
-    note: "밝은 바탕에 얇은 테두리",
+    name: "필름",
+    note: "밝은 바탕에 필름 무늬",
     image: "/frames/paper.png",
   },
 ];
