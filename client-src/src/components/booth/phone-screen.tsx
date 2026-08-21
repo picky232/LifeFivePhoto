@@ -60,14 +60,30 @@ export function PhoneScreen({
           </p>
         </div>
 
-        {/* 입력값 — 실제 input 이 아니라 그림이다 */}
-        <p
-          className={`headline border-ink shrink-0 border-b-4 pb-2 text-6xl ${
-            // 20% 는 대비 1.56이라 자리표시가 안 보인다
-            digits ? "text-ink" : "text-ink/35"
-          }`}
-        >
-          {digits ? format(digits) : "010-0000-0000"}
+        {/*
+          입력값 — 실제 input 이 아니라 그림이다.
+
+          ★ 상자 너비를 글자 수에 맡기면 안 된다. 자리표시(010-0000-0000)는 열세
+            글자인데 첫 숫자를 누르는 순간 한 글자로 줄어든다. 그러면 상자가 확
+            좁아지면서 줄바꿈이 풀려 위로 올라갔다가, 번호가 길어지면 다시
+            내려온다 — 누를 때마다 번호가 춤춘다.
+
+            그래서 가장 긴 꼴만큼 자리를 미리 잡아두고(보이지 않는 본), 숫자는
+            그 안에서 왼쪽부터 채운다. 이러면 이미 누른 숫자는 제자리에 있고
+            상자도 움직이지 않는다. tabular-nums 는 숫자 폭까지 고정한다.
+        */}
+        <p className="headline border-ink relative shrink-0 border-b-4 pb-2 text-6xl tabular-nums">
+          <span aria-hidden className="invisible">
+            010-0000-0000
+          </span>
+          <span
+            className={`absolute inset-x-0 top-0 text-left ${
+              // 20% 는 대비 1.56이라 자리표시가 안 보인다
+              digits ? "text-ink" : "text-ink/35"
+            }`}
+          >
+            {digits ? format(digits) : "010-0000-0000"}
+          </span>
         </p>
       </div>
 
