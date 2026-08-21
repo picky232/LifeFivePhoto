@@ -12,57 +12,74 @@
  *   node scripts/check-frame.js client-src/public/frames/classic.png
  *   node scripts/check-frame.js --template 새프레임-바탕.png
  *
- * 칸 좌표는 frame.ts 에서 읽어온다. 여기 따로 적어두면 언젠가 갈라진다.
+ * 칸 자리는 frame.ts 를 그대로 불러와서 쓴다. 여기서 좌표를 다시 계산하면
+ * frame.ts 의 배치가 바뀌었을 때 조용히 갈라진다 — 그러면 도구가 옛 자리를
+ * 기준으로 "맞다"고 말하게 된다.
  */
 
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
+const { pathToFileURL } = require('url');
 
 const FRAME_TS = path.join(__dirname, '..', 'client-src', 'src', 'lib', 'frame.ts');
 
 /* ── 칸 자리 ─────────────────────────────────────────────── */
 
-function readGeometry() {
-  let src;
-  try {
-    src = fs.readFileSync(FRAME_TS, 'utf8');
-  } catch {
+/**
+ * frame.ts 를 불러온다.
+ *
+ * Node 는 22.6 부터 .ts 의 타입만 걷어내고 실행할 수 있다. client-src 에
+ * package.json 이 type 을 안 적어둬서 "CommonJS 로 못 읽어 ESM 으로 다시 읽는다"는
+ * 경고가 뜨는데, 결과에는 영향이 없으므로 그 경고만 걸러낸다.
+ */
+async function readGeometry() {
+  // 걸러낸 것만 빼고 그대로 흘려보낸다. 모아뒀다 나중에 찍으면 이 경고가
+  // 다음 틱에 오기 때문에 진짜 경고가 영영 안 나오게 된다.
+  process.removeAllListeners('warning');
+  process.on('warning', (w) => {
+    if (w.code === 'MODULE_TYPELESS_PACKAGE_JSON') return;
+    console.warn(w.stack || w.message);
+  });
+
+  if (!fs.existsSync(FRAME_TS)) {
     throw new Error(`frame.ts 를 못 찾았습니다: ${FRAME_TS}`);
   }
 
-  const num = (re, what) => {
-    const m = src.match(re);
-    if (!m) throw new Error(`frame.ts 에서 ${what} 를 못 읽었습니다. 형식이 바뀌었는지 확인하세요.`);
-    return Number(m[1]);
-  };
+  let mod;
+  try {
+    mod = await import(pathToFileURL(FRAME_TS).href);
+  } catch (e) {
+    throw new Error(
+      `frame.ts 를 불러오지 못했습니다 — ${e.message}\n` +
+        '  .ts 를 그대로 실행하려면 Node 22.6 이상이 필요합니다 (node --version).',
+    );
+  }
 
-  const dpi = num(/PRINT_DPI\s*=\s*(\d+)/, 'PRINT_DPI');
-  const inchW = num(/PAGE_INCH\s*=\s*\{\s*w:\s*(\d+)/, 'PAGE_INCH.w');
-  const inchH = num(/PAGE_INCH\s*=\s*\{[^}]*h:\s*(\d+)/, 'PAGE_INCH.h');
-  const margin = num(/const MARGIN\s*=\s*(\d+)/, 'MARGIN');
-  const gap = num(/const GAP\s*=\s*(\d+)/, 'GAP');
-  const cols = num(/const COLS\s*=\s*(\d+)/, 'COLS');
-  const rows = num(/const ROWS\s*=\s*(\d+)/, 'ROWS');
-
-  const page = { w: inchW * dpi, h: inchH * dpi };
-  const cut = {
-    w: (page.w - margin * 2 - gap * (cols - 1)) / cols,
-    h: (page.h - margin * 2 - gap * (rows - 1)) / rows,
-  };
-
-  // frame.ts 와 같은 좌3·우2 배치
-  const cell = (c, r) => ({
-    x: margin + c * (cut.w + gap),
-    y: margin + r * (cut.h + gap),
-    w: cut.w,
-    h: cut.h,
+  const page = mod.PAGE;
+  const slots = mod.SLOTS;
+  if (!page || typeof page.w !== 'number' || typeof page.h !== 'number') {
+    throw new Error('frame.ts 에 PAGE 가 없습니다.');
+  }
+  if (!Array.isArray(slots) || slots.length === 0) {
+    throw new Error('frame.ts 에 SLOTS 가 없습니다.');
+  }
+  // 칸 자리는 화소 단위라 정수여야 한다. 소수가 섞이면 화소를 셀 때 색인이
+  // 소수가 되어 없는 자리를 읽고, 아무 말 없이 틀린 값이 나온다.
+  // frame.ts 가 여백·간격으로 나눠서 만드는 값이라 안 나누어떨어지면 이렇게 된다.
+  slots.forEach((s, i) => {
+    for (const k of ['x', 'y', 'w', 'h']) {
+      if (typeof s[k] !== 'number') throw new Error(`SLOTS[${i}] 의 ${k} 가 숫자가 아닙니다.`);
+      if (!Number.isInteger(s[k])) {
+        throw new Error(
+          `SLOTS[${i}] 의 ${k} 가 정수가 아닙니다 (${s[k]}). ` +
+            'frame.ts 의 여백·간격이 종이 크기로 나누어떨어지는지 확인하세요.',
+        );
+      }
+    }
   });
-  const slots = [0, 1, 2, 3, 4].map((i) =>
-    Object.assign({ index: i }, cell(i < 3 ? 0 : 1, i < 3 ? i : i - 3)),
-  );
 
-  return { page, cut, slots };
+  return { page, slots };
 }
 
 /* ── PNG ─────────────────────────────────────────────────── */
@@ -75,7 +92,6 @@ function decode(file) {
 
   let pos = 8;
   let ihdr = null;
-  let plte = null;
   let trns = null;
   const idat = [];
 
@@ -92,7 +108,6 @@ function decode(file) {
         interlace: data[12],
       };
     } else if (type === 'IDAT') idat.push(data);
-    else if (type === 'PLTE') plte = data;
     else if (type === 'tRNS') trns = data;
     else if (type === 'IEND') break;
     pos += 12 + len;
@@ -144,7 +159,7 @@ function decode(file) {
     }
   }
 
-  return { w: ihdr.w, h: ihdr.h, alpha, hasAlpha, color: ihdr.color };
+  return { w: ihdr.w, h: ihdr.h, alpha, hasAlpha };
 }
 
 const CRC = (() => {
@@ -172,9 +187,101 @@ function chunk(type, data) {
 /* ── 재기 ────────────────────────────────────────────────── */
 
 const CLEAR = 16; // 이 값보다 투명하면 "뚫렸다"고 본다
+const SLACK = 1; // 가장자리 1px 은 그림 저장할 때 생기는 흐림으로 본다
+const PROBE = 24; // 칸 밖으로 몇 px 까지 새는지 살펴볼 깊이
 
-function check(file) {
-  const { page, slots } = readGeometry();
+/**
+ * 이만큼도 안 뚫렸으면 안 뚫린 것으로 본다.
+ *
+ * 딱 0 으로만 걸러내면 화소 몇 개가 우연히 비친 그림이 "뚫림 0%" 라고
+ * 찍히면서 통과한다. 사진이 사실상 다 가려지는데도 그렇다.
+ */
+const MIN_OPEN = 0.02;
+
+const SIDE_KO = { left: '왼쪽', right: '오른쪽', top: '위', bottom: '아래' };
+
+/**
+ * 칸 하나를 잰다.
+ *
+ * 예전에는 칸 가운데에서 십자로 한 줄씩 훑어 구멍의 네모를 잡았다. 그 방법은
+ * 구멍이 반듯한 네모일 때만 맞는다. 사진 위로 걸치는 장식(테이프·리본)이
+ * 가운데를 가로지르면 "안 뚫렸다"고 잘못 말한다 — 기획서가 허용하는 디자인인데도.
+ *
+ * 그래서 지금은 네모를 잡지 않고 세 가지를 따로 센다.
+ *   뚫린 넓이   칸 안에서 실제로 비어 있는 비율
+ *   덮인 가장자리 네 변에서 프레임이 몇 px 을 덮고 있는지
+ *   새는 자리   칸 밖으로 구멍이 얼마나 나갔는지 (이것만 잘못이다)
+ */
+function measureSlot(img, s, all, page) {
+  const at = (x, y) => img.alpha[y * img.w + x];
+  const clear = (x, y) => at(x, y) < CLEAR;
+
+  const x0 = Math.max(0, s.x);
+  const y0 = Math.max(0, s.y);
+  const x1 = Math.min(img.w, s.x + s.w);
+  const y1 = Math.min(img.h, s.y + s.h);
+  if (x1 <= x0 || y1 <= y0) return { outside: true };
+
+  // 뚫린 넓이
+  let open = 0;
+  for (let y = y0; y < y1; y++) {
+    for (let x = x0; x < x1; x++) if (clear(x, y)) open++;
+  }
+  const ratio = open / (s.w * s.h);
+
+  // 덮인 가장자리 — 변에서부터 "통째로 불투명한 줄"이 몇 줄 이어지는지
+  const covered = { left: 0, right: 0, top: 0, bottom: 0 };
+  const colOpaque = (x) => {
+    for (let y = y0; y < y1; y++) if (clear(x, y)) return false;
+    return true;
+  };
+  const rowOpaque = (y) => {
+    for (let x = x0; x < x1; x++) if (clear(x, y)) return false;
+    return true;
+  };
+  while (covered.left < x1 - x0 && colOpaque(x0 + covered.left)) covered.left++;
+  while (covered.right < x1 - x0 && colOpaque(x1 - 1 - covered.right)) covered.right++;
+  while (covered.top < y1 - y0 && rowOpaque(y0 + covered.top)) covered.top++;
+  while (covered.bottom < y1 - y0 && rowOpaque(y1 - 1 - covered.bottom)) covered.bottom++;
+
+  // 새는 자리 — 칸 바깥으로 몇 px 까지 투명한 자리가 이어지는지.
+  // 이웃 칸이나 종이 끝을 넘어가지 않도록 살펴볼 깊이를 미리 줄인다.
+  const overlapV = (o) => o.y < s.y + s.h && s.y < o.y + o.h;
+  const overlapH = (o) => o.x < s.x + s.w && s.x < o.x + o.w;
+  const room = {
+    left: s.x,
+    right: page.w - (s.x + s.w),
+    top: s.y,
+    bottom: page.h - (s.y + s.h),
+  };
+  for (const o of all) {
+    if (o === s) continue;
+    if (overlapV(o) && o.x + o.w <= s.x) room.left = Math.min(room.left, s.x - (o.x + o.w));
+    if (overlapV(o) && o.x >= s.x + s.w) room.right = Math.min(room.right, o.x - (s.x + s.w));
+    if (overlapH(o) && o.y + o.h <= s.y) room.top = Math.min(room.top, s.y - (o.y + o.h));
+    if (overlapH(o) && o.y >= s.y + s.h) room.bottom = Math.min(room.bottom, o.y - (s.y + s.h));
+  }
+
+  const spill = { left: 0, right: 0, top: 0, bottom: 0 };
+  const anyClearCol = (x) => {
+    for (let y = y0; y < y1; y++) if (x >= 0 && x < img.w && clear(x, y)) return true;
+    return false;
+  };
+  const anyClearRow = (y) => {
+    for (let x = x0; x < x1; x++) if (y >= 0 && y < img.h && clear(x, y)) return true;
+    return false;
+  };
+  const depth = (side) => Math.max(0, Math.min(PROBE, room[side]));
+  for (let d = 1; d <= depth('left'); d++) { if (!anyClearCol(s.x - d)) break; spill.left = d; }
+  for (let d = 1; d <= depth('right'); d++) { if (!anyClearCol(s.x + s.w - 1 + d)) break; spill.right = d; }
+  for (let d = 1; d <= depth('top'); d++) { if (!anyClearRow(s.y - d)) break; spill.top = d; }
+  for (let d = 1; d <= depth('bottom'); d++) { if (!anyClearRow(s.y + s.h - 1 + d)) break; spill.bottom = d; }
+
+  return { ratio, covered, spill, room };
+}
+
+function check(file, geometry) {
+  const { page, slots } = geometry;
   const img = decode(file);
 
   console.log(`${file}`);
@@ -191,58 +298,54 @@ function check(file) {
     return false;
   }
 
-  const at = (x, y) => img.alpha[y * img.w + x];
+  slots.forEach((s, i) => {
+    const label = `칸${i + 1}`;
+    const place = `칸 ${s.x},${s.y} ${s.w}x${s.h}`;
+    const m = measureSlot(img, s, slots, page);
 
-  for (const s of slots) {
-    const cx = Math.round(s.x + s.w / 2);
-    const cy = Math.round(s.y + s.h / 2);
-
-    if (cx >= img.w || cy >= img.h) {
-      console.log(`  칸${s.index + 1}  ✗ 그림 밖입니다`);
+    if (m.outside) {
+      console.log(`  ${label}  ✗ ${place} — 그림 밖입니다`);
       ok = false;
-      continue;
-    }
-    if (at(cx, cy) >= CLEAR) {
-      console.log(`  칸${s.index + 1}  ✗ 가운데가 안 뚫려 있습니다 — 사진이 가려집니다`);
-      ok = false;
-      continue;
+      return;
     }
 
-    // 칸 가운데에서 밖으로 훑어 구멍의 경계를 찾는다
-    let l = cx; while (l > 0 && at(l - 1, cy) < CLEAR) l--;
-    let r = cx; while (r < img.w - 1 && at(r + 1, cy) < CLEAR) r++;
-    let t = cy; while (t > 0 && at(cx, t - 1) < CLEAR) t--;
-    let b = cy; while (b < img.h - 1 && at(cx, b + 1) < CLEAR) b++;
+    const pct = Math.round(m.ratio * 100);
 
-    const hole = { x: l, y: t, w: r - l + 1, h: b - t + 1 };
+    if (m.ratio < MIN_OPEN) {
+      const how = m.ratio === 0 ? '한 군데도 안 뚫려 있습니다' : `${pct}% 밖에 안 뚫려 있습니다`;
+      console.log(`  ${label}  ✗ ${place} — ${how}. 사진이 통째로 가려집니다`);
+      ok = false;
+      return;
+    }
 
-    // 구멍이 칸보다 큰 쪽이 문제다. 그 틈으로 바탕이 비친다.
-    // 작은 건 프레임이 사진 가장자리를 덮는 것이라 의도된 경우가 많다
-    // (지금 프레임도 아래쪽을 학과 이름표 띠로 덮는다).
-    const over = {
-      left: s.x - hole.x,
-      top: s.y - hole.y,
-      right: hole.x + hole.w - (s.x + s.w),
-      bottom: hole.y + hole.h - (s.y + s.h),
-    };
-    const spill = Math.max(over.left, over.top, over.right, over.bottom);
-    const covered = {
-      left: Math.max(0, hole.x - s.x),
-      top: Math.max(0, hole.y - s.y),
-      right: Math.max(0, s.x + s.w - (hole.x + hole.w)),
-      bottom: Math.max(0, s.y + s.h - (hole.y + hole.h)),
-    };
+    // 칸 밖으로 새는 것만 잘못이다. 그 틈으로 프레임 뒤 바탕이 비친다.
+    const leaks = Object.keys(m.spill).filter((k) => m.spill[k] > SLACK);
+    if (leaks.length) {
+      const detail = leaks.map((k) => `${SIDE_KO[k]} ${m.spill[k]}px`).join(' · ');
+      const capped = leaks.some((k) => m.spill[k] >= Math.min(PROBE, m.room[k]));
+      console.log(
+        `  ${label}  ✗ ${place} — 구멍이 칸 밖으로 나갔습니다 (${detail}${capped ? ' 이상' : ''}). 바탕이 비칩니다`,
+      );
+      ok = false;
+      return;
+    }
 
-    const mark = spill > 1 ? '✗' : '·';
-    if (spill > 1) ok = false;
+    // 덮는 것은 잘못이 아니다. 다만 얼마나 덮는지는 알려준다 —
+    // 모르고 넘어가면 사진이 잘려 나간 걸 인쇄하고 나서야 안다.
+    const c = m.covered;
+    const parts = [];
+    for (const k of ['top', 'bottom', 'left', 'right']) {
+      if (c[k] > SLACK) parts.push(`${SIDE_KO[k]} ${c[k]}px`);
+    }
+    const big =
+      c.left + c.right > s.w * 0.25 || c.top + c.bottom > s.h * 0.25;
 
     console.log(
-      `  칸${s.index + 1}  ${mark} 칸 ${s.x},${s.y} ${s.w}x${s.h}` +
-        `  구멍 ${hole.x},${hole.y} ${hole.w}x${hole.h}` +
-        (spill > 1 ? `  → 구멍이 ${spill}px 큽니다 (바탕이 비칩니다)` : '') +
-        (covered.bottom > 1 ? `  아래 ${covered.bottom}px 덮음` : ''),
+      `  ${label}  ${big ? '⚠' : '·'} ${place}  뚫림 ${pct}%` +
+        (parts.length ? `  덮음 ${parts.join(' · ')}` : '') +
+        (big ? '  ← 사진이 많이 가려집니다. 의도한 것인지 확인하세요' : ''),
     );
-  }
+  });
 
   console.log(ok ? '  → 그대로 쓸 수 있습니다' : '  → 고쳐야 합니다');
   return ok;
@@ -250,16 +353,30 @@ function check(file) {
 
 /* ── 바탕 만들기 ─────────────────────────────────────────── */
 
-function template(outFile) {
-  const { page, slots } = readGeometry();
+/** 얹어놓고 자리를 보라고 만드는 것이라 비쳐야 한다. 이 값이 255 면 쓸모가 없다. */
+const TEMPLATE_ALPHA = 0x66;
+
+function template(outFile, geometry) {
+  const { page, slots } = geometry;
+
+  // 판 밖으로 나간 칸이 있으면 조용히 안 뚫린 바탕이 나온다 (Buffer 는 범위를
+  // 벗어난 쓰기를 그냥 버린다). 그런 바탕은 쓸모가 없으므로 미리 멈춘다.
+  slots.forEach((s, i) => {
+    if (s.x < 0 || s.y < 0 || s.x + s.w > page.w || s.y + s.h > page.h) {
+      throw new Error(
+        `칸${i + 1} 이 판 밖으로 나갑니다 — 칸 ${s.x},${s.y} ${s.w}x${s.h}, 판 ${page.w}x${page.h}. frame.ts 를 확인하세요.`,
+      );
+    }
+  });
+
   const px = Buffer.alloc(page.w * page.h * 4);
 
-  // 전체를 반투명 회색으로 채운다. 디자인 위에 얹어보고 자리를 맞추기 좋게.
+  // 전체를 반투명 회색으로 채운다. 디자인 위에 얹어놓고 자리를 맞추기 좋게.
   for (let i = 0; i < page.w * page.h; i++) {
     px[i * 4] = 0x20;
     px[i * 4 + 1] = 0x20;
     px[i * 4 + 2] = 0x20;
-    px[i * 4 + 3] = 0xff;
+    px[i * 4 + 3] = TEMPLATE_ALPHA;
   }
   // 칸은 완전히 뚫는다
   for (const s of slots) {
@@ -292,14 +409,14 @@ function template(outFile) {
 
   console.log(`${outFile} 를 만들었습니다  ${page.w}x${page.h}`);
   console.log('뚫린 자리 (여기에 사진이 들어갑니다)');
-  for (const s of slots) {
-    console.log(`  칸${s.index + 1}  ${s.x}, ${s.y}   ${s.w} x ${s.h}`);
-  }
+  slots.forEach((s, i) => {
+    console.log(`  칸${i + 1}  ${s.x}, ${s.y}   ${s.w} x ${s.h}`);
+  });
 }
 
 /* ── 실행 ────────────────────────────────────────────────── */
 
-function main() {
+async function main() {
   const args = process.argv.slice(2);
   if (args.length === 0) {
     console.log('쓰는 법');
@@ -309,15 +426,25 @@ function main() {
   }
 
   try {
+    const geometry = await readGeometry();
+
     if (args[0] === '--template') {
       const out = args[1];
       if (!out) throw new Error('만들 파일 이름을 적어주세요.');
-      template(out);
+      template(out, geometry);
       return;
     }
+    // 한 파일이 깨졌다고 나머지를 건너뛰면, 여러 장을 한 번에 넘겼을 때
+    // 뒤쪽 파일이 멀쩡한지 알 수 없게 된다. 파일마다 따로 잡는다.
     let allOk = true;
     for (const f of args) {
-      if (!check(f)) allOk = false;
+      try {
+        if (!check(f, geometry)) allOk = false;
+      } catch (e) {
+        console.log(`${f}`);
+        console.log(`  ✗ ${e.message}`);
+        allOk = false;
+      }
       console.log('');
     }
     process.exit(allOk ? 0 : 1);
