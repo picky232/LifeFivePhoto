@@ -51,7 +51,7 @@ async function main() {
       text('캔버스 1200 x 1800 px · 4 x 6인치 · 300dpi · PNG(배경 투명)', 100, 176, {
         size: 27, color: '#6d6a64',
       });
-      text('인화 용지 100 x 148 mm — 캔버스보다 작아 가장자리가 잘립니다', 100, 216, {
+      text('테두리는 흰색으로 비웁니다 — 위아래 7mm · 좌우 4mm', 100, 216, {
         size: 27, color: '#c0392b', weight: '600',
       });
       g.fillStyle = MINT;
@@ -66,19 +66,19 @@ async function main() {
 
       // 잘려나가는 자리
       const s = G.safeBox;
-      g.fillStyle = 'rgba(224,74,63,0.13)';
+      g.fillStyle = '#ffffff';
       g.fillRect(0, 0, G.W, s.y);
       g.fillRect(0, s.y + s.h, G.W, G.H - (s.y + s.h));
       g.fillRect(0, s.y, s.x, s.h);
       g.fillRect(s.x + s.w, s.y, G.W - (s.x + s.w), s.h);
 
-      // 빗금으로 한 번 더 표시한다 — 색만으로는 "칠해도 되는 자리" 로 읽힌다
+      // 흰색만 두면 판 바탕과 구분이 안 된다. 옅은 빗금으로 자리를 표시한다
       g.save();
       g.beginPath();
       g.rect(0, 0, G.W, G.H);
       g.rect(s.x, s.y, s.w, s.h);
       g.clip('evenodd');
-      g.strokeStyle = 'rgba(224,74,63,0.28)';
+      g.strokeStyle = 'rgba(120,120,120,0.22)';
       g.lineWidth = 2;
       for (let i = -G.H; i < G.W; i += 22) {
         g.beginPath(); g.moveTo(i, 0); g.lineTo(i + G.H, G.H); g.stroke();
@@ -174,13 +174,13 @@ async function main() {
       }
 
       const t0 = G.slots[0];
-      vdim(PX - 40, PY, PY + G.SAFE, '잘림 ' + G.SAFE + 'px', '#c0392b');
-      vdim(PX - 40, PY + G.SAFE, PY + t0.y, '여백 ' + G.MY + 'px', '#7a6f66');
+      vdim(PX - 40, PY, PY + G.SAFE_Y, '흰 테 ' + G.SAFE_Y + 'px (' + mm(G.SAFE_Y) + 'mm)', '#c0392b');
+      vdim(PX - 40, PY + G.SAFE_Y, PY + t0.y, '여백 ' + G.MY + 'px', '#7a6f66');
       vdim(PX - 40, PY + t0.y, PY + t0.y + G.CH, '사진 ' + G.CH + 'px', '#1f5e59');
       vdim(PX - 40, PY + t0.y + G.CH, PY + t0.y + G.CH + G.GY, '간격 ' + G.GY + 'px', '#7a6f66');
 
       hdim(PY - 44, PX + t0.x, PX + t0.x + G.CW, '사진 ' + G.CW + 'px', 'center', '#1f5e59');
-      hdim(PY - 110, PX, PX + G.SAFE, '잘림 ' + G.SAFE + 'px (' + mm(G.SAFE) + 'mm)', 'right', '#c0392b');
+      hdim(PY - 110, PX, PX + G.SAFE_X, '흰 테 ' + G.SAFE_X + 'px (' + mm(G.SAFE_X) + 'mm)', 'right', '#c0392b');
       hdim(PY - 110, PX + G.channel.x, PX + G.channel.x + G.channel.w,
         '간격 ' + G.GX + 'px', 'center', '#7a6f66');
 
@@ -190,8 +190,8 @@ async function main() {
       ly += 52;
 
       const legend = [
-        ['빨간 빗금', '#f6dedb', '#c0392b', '잘려나가는 자리 (사방 ' + mm(G.SAFE) + 'mm). 바탕과 무늬는 여기까지 채우되, 글자·로고·사진은 넣지 않습니다'],
-        ['빨간 점선', '#ffffff', '#c0392b', '안전선. 이 안쪽만 종이에 확실히 남습니다'],
+        ['흰 테', '#ffffff', '#c0392b', '흰색으로 비웁니다 (위아래 ' + mm(G.SAFE_Y) + 'mm · 좌우 ' + mm(G.SAFE_X) + 'mm). 여기에는 아무것도 넣지 않습니다'],
+        ['빨간 점선', '#ffffff', '#c0392b', '흰 테의 안쪽 끝. 디자인은 이 선 안쪽에만 넣습니다'],
         ['민트 칸 1~5', '#e9f7f5', '#2aa89e', '사진이 들어가는 자리. 완성 PNG 에서는 완전히 뚫려 있어야 합니다 (알파 0)'],
         ['연한 민트 배경', '#d5f0ec', '#2aa89e', '학과 관련 물품·일러스트를 그릴 수 있는 자리'],
         ['회색 점선 칸', '#ffffff', '#8d8d8d', '로고 칸. 사진 안 들어감. 자유롭게 디자인'],
@@ -216,11 +216,11 @@ async function main() {
         size: 26, color: '#8a2f26', weight: '600',
       });
       ly += 40;
-      text('용지(100 x 148mm)가 캔버스(101.6 x 152.4mm)보다 작아 가로 1.6mm · 세로 4.4mm 가 먼저 잘리고,', 100, ly, {
+      text('용지(100 x 148mm)가 캔버스(101.6 x 152.4mm)보다 작아 세로가 더 많이 잘립니다 (4.4mm 대 1.6mm).', 100, ly, {
         size: 24, color: '#6d6a64',
       });
       ly += 34;
-      text('인화기 여백이 더 붙습니다. 사방 ' + mm(G.SAFE) + 'mm 를 잡아둔 것은 그 둘을 합쳐 잡은 값입니다.', 100, ly, {
+      text('위아래를 더 넓게 잡은 것은 그래서입니다. 흰 테는 조금 틀어져 잘려도 원래 그런 디자인으로 보입니다.', 100, ly, {
         size: 24, color: '#6d6a64',
       });
 

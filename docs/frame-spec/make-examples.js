@@ -116,8 +116,12 @@ async function main() {
         const bg = g.createLinearGradient(0, 0, 0, G.H);
         bg.addColorStop(0, '#14171a');
         bg.addColorStop(1, '#0c0e10');
-        g.fillStyle = bg;
+        // 테두리는 흰색으로 비운다. 인화기가 정확히 자르지 못해도
+        // 흰 테는 원래 그런 디자인으로 보인다.
+        g.fillStyle = '#ffffff';
         g.fillRect(0, 0, G.W, G.H);
+        g.fillStyle = bg;
+        g.fillRect(S.x, S.y, S.w, S.h);
 
         g.strokeStyle = 'rgba(129,216,208,0.30)';
         g.lineWidth = 2;
@@ -198,8 +202,10 @@ async function main() {
         const r = make(G.W, G.H);
         const c = r.c, g = r.g;
 
-        g.fillStyle = '#f7f5f0';
+        g.fillStyle = '#ffffff';
         g.fillRect(0, 0, G.W, G.H);
+        g.fillStyle = '#f7f5f0';
+        g.fillRect(S.x, S.y, S.w, S.h);
 
         // 좌우 필름 구멍 — 여백 80px 안에 들어가도록 좁게
         g.fillStyle = '#e4dfd5';
