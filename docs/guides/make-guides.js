@@ -47,89 +47,76 @@ const STAMP = process.argv[3] || new Date().toISOString().slice(0, 10);
 /* ── 종이 꾸밈 ───────────────────────────────────────────── */
 
 const CSS = `
-  @page { size: A4; margin: 14mm 14mm 12mm; }
+  @page { size: A4; margin: 13mm 13mm 10mm; }
 
   * { box-sizing: border-box; }
   body {
     margin: 0;
     font-family: "Malgun Gothic", sans-serif;
     color: #16181a;
-    font-size: 10.4pt;
-    line-height: 1.5;
+    font-size: 11.5pt;
+    line-height: 1.45;
     word-break: keep-all;
     overflow-wrap: break-word;
   }
 
-  header { border-bottom: 3px solid #16181a; padding-bottom: 4mm; margin-bottom: 5mm; }
-  .kicker { font-size: 9.5pt; letter-spacing: .18em; color: #6c6a66; }
-  h1 { margin: 1.5mm 0 1.2mm; font-size: 22pt; letter-spacing: -.01em; }
-  .lede { margin: 0; font-size: 11pt; color: #4a4844; }
+  header { border-bottom: 3px solid #16181a; padding-bottom: 3.5mm; margin-bottom: 5mm; }
+  .kicker { font-size: 10pt; letter-spacing: .16em; color: #6c6a66; }
+  h1 { margin: 1.5mm 0 0; font-size: 26pt; letter-spacing: -.01em; }
 
   h2 {
     margin: 5.5mm 0 2.5mm;
-    font-size: 12pt;
-    padding-left: 3mm;
+    font-size: 11.5pt;
+    padding-left: 2.5mm;
     border-left: 4px solid #81d8d0;
+    color: #4a4844;
   }
 
   ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; }
   ol.steps > li {
     counter-increment: s;
     position: relative;
-    padding: 0 0 3.2mm 11mm;
+    padding: 0 0 4.5mm 13mm;
     break-inside: avoid;
   }
   ol.steps > li::before {
     content: counter(s);
-    position: absolute; left: 0; top: -0.6mm;
-    width: 8mm; height: 8mm;
+    position: absolute; left: 0; top: 0;
+    width: 9.5mm; height: 9.5mm;
     background: #16181a; color: #fff;
-    font-weight: 700; font-size: 11pt;
+    font-weight: 700; font-size: 13pt;
     display: flex; align-items: center; justify-content: center;
   }
   ol.steps > li.warn::before { background: #c0392b; }
-  .st { font-weight: 700; font-size: 11.2pt; }
-  .sd { margin: 1mm 0 0; color: #4a4844; }
+  .st { font-weight: 700; font-size: 13.5pt; line-height: 1.3; }
+  .st.red { color: #c0392b; }
 
   .path {
     display: inline-block;
-    margin-top: 1.5mm;
-    padding: 1mm 2.5mm;
+    margin-top: 2mm;
+    padding: 1.6mm 3mm;
     background: #f2f0eb;
     border: 1px solid #ddd9d0;
-    font-size: 10.5pt;
+    font-size: 11.5pt;
     font-weight: 700;
   }
   /* 한글 글꼴은 역슬래시를 원화 기호로 그린다. 경로가 잘못 읽히므로
      코드 조각만 영문 고정폭 글꼴을 먼저 쓰게 한다. */
+  /* 경로의 역슬래시는 &#92; 로 적는다. 템플릿 문자열 안에서 \r 같은 것이
+     제어문자로 먹혀 글자가 통째로 사라진 적이 있다. */
   code {
-    background: #f2f0eb; padding: .3mm 1.5mm; font-size: 10pt;
-    font-family: Consolas, "Courier New", monospace;
+    background: #f2f0eb; padding: .4mm 1.6mm; font-size: 11pt;
+    font-family: Consolas, "Courier New", monospace; font-weight: 700;
   }
+  .big { font-size: 13pt; }
 
-  .note {
-    margin-top: 2mm; padding: 3mm 4mm;
-    background: #fdf3f1; border-left: 4px solid #c0392b;
-    font-size: 10.5pt; color: #7d2b20;
-  }
-  .tip {
-    margin-top: 2mm; padding: 3mm 4mm;
-    background: #eefaf8; border-left: 4px solid #2aa89e;
-    font-size: 10.5pt; color: #1f5e59;
-  }
-
-  table { width: 100%; border-collapse: collapse; font-size: 10.5pt; margin-top: 2mm; }
-  th, td { border: 1px solid #ddd9d0; padding: 1.8mm 2.6mm; text-align: left; vertical-align: top; }
-  th { background: #f2f0eb; font-weight: 700; white-space: nowrap; }
-
-  /* 문제 해결은 따로 한 장으로 뽑아 손 닿는 곳에 둔다.
-     저절로 끊기게 두면 표가 장 사이에서 잘린다. */
-  section.next { break-before: page; }
-  section.next h2:first-child { margin-top: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 11pt; margin-top: 1mm; }
+  th, td { border: 1px solid #ddd9d0; padding: 2.2mm 3mm; text-align: left; vertical-align: middle; }
+  th { background: #f2f0eb; font-weight: 700; white-space: nowrap; width: 32%; }
 
   footer {
-    margin-top: 6mm; padding-top: 2.5mm;
-    border-top: 1px solid #ddd9d0;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    padding-top: 2.5mm; border-top: 1px solid #ddd9d0;
     font-size: 9pt; color: #8a8781;
     display: flex; justify-content: space-between;
   }
@@ -141,7 +128,7 @@ function page(title, kicker, lede, body) {
 <header>
   <div class="kicker">${kicker}</div>
   <h1>${title}</h1>
-  <p class="lede">${lede}</p>
+  ${lede ? `<p class="lede">${lede}</p>` : ''}
 </header>
 ${body}
 <footer><span>분당경영고등학교 · 분경5컷</span><span>${STAMP} 판</span></footer>
@@ -152,61 +139,47 @@ ${body}
 
 const CERT = page(
   '아이패드 인증서 설치',
-  '분경5컷 · 접속 기기 준비 · 기기마다 처음 한 번만',
-  '이 절차를 마쳐야 사진을 찍을 수 있습니다. 3번을 빼먹으면 카메라가 열리지 않습니다.',
+  '분경5컷 · 기기마다 처음 한 번만',
+  '',
   `
-<h2>왜 필요한가</h2>
-<p>사파리는 <b>신뢰된 HTTPS 에서만</b> 카메라를 열어줍니다. 부스는 인터넷 없이 노트북 안에서만
-도는 서버라 공인 인증서를 받을 수 없어, 노트북이 만든 인증서를 아이패드가 믿도록 한 번 등록해 둡니다.</p>
-
-<h2>준비물</h2>
+<h2>준비</h2>
 <table>
-  <tr><th>파일</th><td><code>server\\certs\\ca\\rootCA.pem</code> — 노트북에 있습니다</td></tr>
-  <tr><th>전달</th><td>에어드롭 · 메일 · 클라우드 중 편한 것</td></tr>
-  <tr><th>없으면</th><td>노트북에서 <code>부스-시작.bat</code> 을 한 번 실행하면 자동으로 만들어집니다</td></tr>
+  <tr><th>보낼 파일</th><td><code>server&#92;certs&#92;ca&#92;rootCA.pem</code> (노트북)</td></tr>
+  <tr><th>보내는 법</th><td>에어드롭 · 메일 · 클라우드</td></tr>
 </table>
 
 <h2>설치</h2>
 <ol class="steps">
   <li>
-    <div class="st">파일을 아이패드로 보내고 엽니다</div>
-    <p class="sd">“프로파일이 다운로드됨” 알림이 뜹니다. 알림이 사라져도 괜찮습니다 — 설정 안에 남아 있습니다.</p>
+    <div class="st">아이패드에서 그 파일을 연다</div>
   </li>
   <li>
-    <div class="st">프로파일을 설치합니다</div>
+    <div class="st">프로파일을 설치한다</div>
     <span class="path">설정 › 일반 › VPN 및 기기 관리 › LifeFivePhoto Local CA › 설치</span>
-    <p class="sd">암호를 물으면 아이패드 잠금 암호를 넣습니다. “설치” 를 두세 번 더 눌러야 끝납니다.</p>
   </li>
   <li class="warn">
-    <div class="st">신뢰를 켭니다 — 가장 많이 빠뜨리는 곳</div>
+    <div class="st red">인증서 신뢰를 켠다 — 빠뜨리면 카메라가 안 열린다</div>
     <span class="path">설정 › 일반 › 정보 › 인증서 신뢰 설정 › LifeFivePhoto Local CA 켜기</span>
-    <div class="note"><b>2번만 하고 끝내면 안 됩니다.</b> 프로파일을 설치해도 이 스위치를 켜지 않으면
-    사파리가 인증서를 믿지 않아 카메라가 열리지 않습니다.</div>
   </li>
   <li>
-    <div class="st">노트북 핫스팟에 연결합니다</div>
-    <p class="sd">노트북 화면에 뜬 Wi-Fi 이름과 비밀번호를 씁니다.</p>
+    <div class="st">노트북 핫스팟 Wi-Fi 에 연결한다</div>
   </li>
   <li>
-    <div class="st">사파리에서 주소를 엽니다</div>
+    <div class="st">사파리에서 주소를 연다</div>
     <span class="path">https://192.168.137.1:3000</span>
-    <p class="sd">주소창에 자물쇠가 보이고 “카메라를 사용하도록 허용” 을 물으면 성공입니다.</p>
   </li>
 </ol>
 
-<div class="tip">카메라 허용은 사파리를 완전히 껐다 켜면 다시 물어볼 수 있습니다. 정상입니다.</div>
+<h2>됐는지 확인</h2>
+<p class="big">주소창에 <b>자물쇠</b>가 보이고 <b>카메라 허용</b>을 물으면 끝.</p>
 
-<section class="next">
-<h2>안 될 때</h2>
+<h2>안 되면</h2>
 <table>
-  <tr><th>증상</th><th>볼 곳</th></tr>
-  <tr><td>“연결이 비공개 상태가 아닙니다”</td><td>3번 신뢰 스위치가 꺼져 있습니다</td></tr>
-  <tr><td>카메라가 안 열림 · 검은 화면</td><td>주소가 <b>https</b> 인지, 자물쇠가 있는지 확인</td></tr>
-  <tr><td>목록에 프로파일이 없음</td><td>파일을 다시 보내고 여는 것부터 다시 합니다</td></tr>
-  <tr><td>페이지가 아예 안 열림</td><td>Wi-Fi 가 노트북 핫스팟에 붙어 있는지 확인</td></tr>
-  <tr><td>인증서 신뢰 설정 항목이 없음</td><td>프로파일 설치(2번)가 끝나지 않았습니다</td></tr>
+  <tr><th>연결이 비공개가 아님</th><td>3번이 꺼져 있다</td></tr>
+  <tr><th>카메라가 안 열림</th><td>3번이 꺼져 있다 · 주소가 https 인지 본다</td></tr>
+  <tr><th>페이지가 안 열림</th><td>Wi-Fi 가 노트북 핫스팟인지 본다</td></tr>
+  <tr><th>프로파일이 안 보임</th><td>파일을 다시 보내고 1번부터</td></tr>
 </table>
-</section>
 `,
 );
 
@@ -214,66 +187,41 @@ const CERT = page(
 
 const SERVER = page(
   '노트북 서버 켜고 끄기',
-  '분경5컷 · 운영자용 · 행사 당일',
-  '평소에는 배치 파일 두 개면 됩니다. 아래쪽은 문제가 생겼을 때만 봅니다.',
+  '분경5컷 · 행사 당일',
+  '',
   `
-<h2>행사 당일</h2>
+<h2>순서</h2>
 <ol class="steps">
   <li>
-    <div class="st">노트북에서 <code>부스-시작.bat</code> 을 두 번 누릅니다</div>
-    <p class="sd">핫스팟을 켜고 서버를 띄웁니다. 처음이라면 필요한 것을 알아서 채우느라 몇 분 걸립니다.</p>
+    <div class="st">노트북에서 <code>부스-시작.bat</code> 을 두 번 누른다</div>
   </li>
   <li>
-    <div class="st">까만 창에 나온 것을 아이패드에 옮깁니다</div>
-    <table>
-      <tr><th>Wi-Fi 이름</th><td>아이패드 Wi-Fi 목록에서 고릅니다</td></tr>
-      <tr><th>비밀번호</th><td>같은 창에 나옵니다</td></tr>
-      <tr><th>주소</th><td><code>https://192.168.137.1:3000</code> — 사파리 주소창에 넣습니다</td></tr>
-    </table>
+    <div class="st">까만 창에 뜬 Wi-Fi 이름과 비밀번호로 아이패드를 연결한다</div>
+  </li>
+  <li>
+    <div class="st">사파리에서 주소를 연다</div>
+    <span class="path">https://192.168.137.1:3000</span>
   </li>
   <li class="warn">
-    <div class="st">그 창을 닫지 않습니다</div>
-    <p class="sd">창이 곧 서버입니다. 닫으면 부스가 멈춥니다. 가려두려면 최소화만 합니다.</p>
+    <div class="st red">까만 창을 닫지 않는다 — 그 창이 서버다</div>
   </li>
   <li>
-    <div class="st">끝나면 <code>부스-종료.bat</code> 을 두 번 누릅니다</div>
-    <p class="sd">서버를 멈추고 핫스팟을 끕니다. 이미 꺼져 있어도 그냥 넘어갑니다.</p>
+    <div class="st">끝나면 <code>부스-종료.bat</code> 을 두 번 누른다</div>
   </li>
 </ol>
 
-<div class="tip"><b>사진은 어디에?</b> 바탕화면 <code>output\\날짜\\전화번호.png</code> 로 쌓입니다.
-예) <code>output\\2026-08-21\\01012345678.png</code></div>
+<h2>사진 저장 위치</h2>
+<p class="big">바탕화면 <code>output&#92;날짜&#92;전화번호.png</code></p>
 
-<h2>부스-시작.bat 이 알아서 하는 것</h2>
+<h2>안 되면</h2>
 <table>
-  <tr><th>Node.js</th><td>없으면 알려주고 멈춥니다 (직접 설치해야 합니다)</td></tr>
-  <tr><th>준비 파일</th><td><code>server\\node_modules</code> 가 없으면 <code>npm install</code></td></tr>
-  <tr><th>인증서</th><td>없으면 <code>node generate-cert.js</code> — 없으면 카메라가 안 열립니다</td></tr>
-  <tr><th>3000번 포트</th><td>이미 쓰고 있으면 어느 프로그램인지 알려주고 멈춥니다</td></tr>
+  <tr><th>3000번을 이미 쓴다</th><td><code>부스-종료.bat</code> 실행 후 다시 시작</td></tr>
+  <tr><th>Node.js 가 없다</th><td>nodejs.org 에서 LTS 설치 후 재부팅</td></tr>
+  <tr><th>방화벽 창이 뜸</th><td><b>개인 네트워크</b> 체크하고 허용</td></tr>
+  <tr><th>아이패드가 Wi-Fi 에 못 붙음</th><td>설정 › 네트워크 및 인터넷 › 모바일 핫스팟 껐다 켜기</td></tr>
+  <tr><th>페이지는 열리나 카메라가 안 열림</th><td>「아이패드 인증서 설치」 3번</td></tr>
+  <tr><th>까만 창을 잃어버림</th><td><code>부스-종료.bat</code> 이 알아서 멈춘다</td></tr>
 </table>
-
-<section class="next">
-<h2>안 될 때</h2>
-<table>
-  <tr><th>증상</th><th>할 일</th></tr>
-  <tr><td>3000번 포트를 이미 쓴다고 나옴</td><td>서버가 다른 창에 이미 떠 있습니다. <code>부스-종료.bat</code> 실행 후 다시 시작</td></tr>
-  <tr><td>Node.js 를 찾을 수 없다고 나옴</td><td>nodejs.org 에서 LTS 를 설치하고 노트북을 다시 켭니다</td></tr>
-  <tr><td>방화벽 창이 뜸</td><td><b>개인 네트워크</b> 를 체크하고 허용합니다 (처음 한 번)</td></tr>
-  <tr><td>아이패드가 Wi-Fi 에 못 붙음</td><td>핫스팟을 껐다 켭니다: 설정 › 네트워크 및 인터넷 › 모바일 핫스팟</td></tr>
-  <tr><td>페이지는 열리는데 카메라가 안 열림</td><td>아이패드 인증서 문제입니다. 「아이패드 인증서 설치」 안내문 3번을 봅니다</td></tr>
-  <tr><td>창을 최소화해 잃어버림</td><td><code>부스-종료.bat</code> 이 3000번을 쥔 것만 골라 멈춥니다</td></tr>
-</table>
-
-<h2>손으로 할 때</h2>
-<p>배치 파일이 안 될 때만 씁니다. <code>server</code> 폴더에서 차례로 실행합니다.</p>
-<table>
-  <tr><th>1</th><td><code>npm install</code> — 준비 파일 받기</td></tr>
-  <tr><th>2</th><td><code>node generate-cert.js</code> — 인증서 만들기</td></tr>
-  <tr><th>3</th><td><code>npm start</code> — 서버 켜기. 접속 주소가 나옵니다</td></tr>
-</table>
-<p>핫스팟은 <b>설정 › 네트워크 및 인터넷 › 모바일 핫스팟</b> 에서 직접 켭니다.
-켜면 노트북에 <code>192.168.137.1</code> 이 붙습니다. 이 값은 윈도우가 고정으로 주므로 장소가 바뀌어도 같습니다.</p>
-</section>
 `,
 );
 
