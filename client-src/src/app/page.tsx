@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import { useCamera } from "@/hooks/use-camera";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { IDLE_RESET_SECONDS } from "@/lib/frame";
+import { DEFAULT_FRAME, type Frame } from "@/lib/frames";
 
 import { IdleScreen } from "@/components/booth/idle-screen";
 import { SplashScreen } from "@/components/booth/splash-screen";
 import { GuideScreen } from "@/components/booth/guide-screen";
 import { ShootScreen } from "@/components/booth/shoot-screen";
 import { SelectScreen } from "@/components/booth/select-screen";
+import { FrameScreen } from "@/components/booth/frame-screen";
 import { PreviewScreen } from "@/components/booth/preview-screen";
 import { PhoneScreen } from "@/components/booth/phone-screen";
 import { PrintingScreen } from "@/components/booth/printing-screen";
@@ -23,13 +25,14 @@ type Step =
   | "guide"
   | "shoot"
   | "select"
+  | "frame"
   | "preview"
   | "phone"
   | "printing"
   | "done";
 
 /** 손을 놓아도 다음 사람이 쓸 수 있게 처음으로 되돌리는 단계들 */
-const RESETTABLE: Step[] = ["splash", "guide", "shoot", "select", "preview", "phone"];
+const RESETTABLE: Step[] = ["splash", "guide", "shoot", "select", "frame", "preview", "phone"];
 
 /**
  * 부스 본체.
@@ -52,6 +55,7 @@ export default function BoothPage() {
   const [shots, setShots] = useState<string[]>([]);
   const [picked, setPicked] = useState<string[]>([]);
   const [frame, setFrame] = useState<string | null>(null);
+  const [chosenFrame, setChosenFrame] = useState<Frame>(DEFAULT_FRAME);
   const [phone, setPhone] = useState<string | null>(null);
 
   const reset = useCallback(() => {
@@ -60,6 +64,7 @@ export default function BoothPage() {
     setShots([]);
     setPicked([]);
     setFrame(null);
+    setChosenFrame(DEFAULT_FRAME);
     setPhone(null);
     setStep("idle");
   }, [stopCamera, letSleep]);
@@ -92,13 +97,18 @@ export default function BoothPage() {
 
   const selectDone = useCallback((chosen: string[]) => {
     setPicked(chosen);
+    setStep("frame");
+  }, []);
+
+  // 프레임 화면이 이미 합성해 둔 그림을 그대로 받는다.
+  // 미리보기에서 다시 만들면 같은 일을 두 번 하고, 그사이 화면이 비어 보인다.
+  const frameDone = useCallback((selected: Frame, composed: string) => {
+    setChosenFrame(selected);
+    setFrame(composed);
     setStep("preview");
   }, []);
 
-  const previewDone = useCallback((composed: string) => {
-    setFrame(composed);
-    setStep("phone");
-  }, []);
+  const previewDone = useCallback(() => setStep("phone"), []);
 
   // 번호는 필수다. 서버가 번호를 파일명으로 쓰기 때문에, 번호가 없으면
   // 사진이 노트북에 저장되지 않고 뽑을 파일도 안 생긴다.
@@ -108,6 +118,16 @@ export default function BoothPage() {
   }, []);
 
   const printDone = useCallback(() => setStep("done"), []);
+
+  /* 지금 어느 단계인지 html 에 남긴다.
+     고르는 화면은 사진 여덟 장이 자리를 많이 써서 가로에서 글자를 더
+     줄여야 한다. 화면마다 크기를 달리하려면 뿌리에 표시가 필요하다. */
+  useEffect(() => {
+    document.documentElement.dataset.step = step;
+    return () => {
+      delete document.documentElement.dataset.step;
+    };
+  }, [step]);
 
   /* ── 방치 감지 ────────────────────────────────────────── */
   useEffect(() => {
@@ -152,11 +172,21 @@ export default function BoothPage() {
     case "select":
       return <SelectScreen shots={shots} onDone={selectDone} onRetake={retake} />;
 
+    case "frame":
+      return (
+        <FrameScreen
+          shots={picked}
+          onBack={() => setStep("select")}
+          onConfirm={frameDone}
+        />
+      );
+
     case "preview":
       return (
         <PreviewScreen
-          shots={picked}
-          onBack={() => setStep("select")}
+          composed={frame}
+          frameName={chosenFrame.name}
+          onBack={() => setStep("frame")}
           onConfirm={previewDone}
         />
       );

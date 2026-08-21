@@ -262,6 +262,12 @@ async function run() {
 
   await clickByText(page, '이 사진으로 만들기');
 
+  log('프레임 고르는 중...');
+  await waitForText(page, '어떤 프레임으로 할까요');
+  // 프레임마다 견본을 합성하므로 버튼이 열릴 때까지 시간이 걸린다
+  await clickByText(page, '이 프레임으로', { timeout: 90000 });
+  steps.push('프레임 선택');
+
   log('합성 결과 확인 중...');
   await waitForText(page, '이렇게 나옵니다');
 

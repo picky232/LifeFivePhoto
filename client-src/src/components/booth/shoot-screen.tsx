@@ -110,9 +110,11 @@ export function ShootScreen({
         )}
       </div>
 
-      <div className="mt-5">
+      {/* 머리글·필름·버튼을 뺀 나머지 세로를 카메라가 모두 가져간다.
+          방향마다 높이를 숫자로 정해두면 기기가 바뀔 때마다 다시 맞춰야 한다. */}
+      <div className="mt-5 flex min-h-0 flex-1 flex-col">
         {/* 남은 시간이 줄어드는 막대. 영상 바로 위에 붙어 있어 곁눈으로 보인다. */}
-        <div className="bg-paper/15 h-2 w-full">
+        <div className="bg-paper/15 h-2 w-full shrink-0">
           <div
             className="bg-mint h-full"
             style={{
@@ -122,10 +124,17 @@ export function ShootScreen({
           />
         </div>
 
-        <div
-          className="relative w-full overflow-hidden bg-black"
-          style={{ aspectRatio: CUT_RATIO, maxHeight: "52vh" }}
-        >
+        {/*
+          높이로 크기를 정하고 너비는 비율이 따라오게 한다.
+          w-full 로 너비를 먼저 정하면 상자가 컷보다 납작해진다. 그러면 화면에
+          보이는 범위와 실제로 찍히는 범위가 어긋나서, 자세를 맞춰도 좌우가
+          잘려 나간다. grab() 이 CUT_RATIO 로 잘라내기 때문이다.
+        */}
+        <div className="flex min-h-0 flex-1 justify-center">
+          <div
+            className="relative h-full overflow-hidden bg-black"
+            style={{ aspectRatio: CUT_RATIO, maxWidth: "100%" }}
+          >
           <video
             ref={attachVideo}
             playsInline
@@ -154,16 +163,17 @@ export function ShootScreen({
             />
           )}
 
-          {done && (
-            <div className="bg-mint text-ink absolute inset-0 grid place-items-center">
-              <p className="headline text-7xl">다 찍었어요</p>
-            </div>
-          )}
+            {done && (
+              <div className="bg-mint text-ink absolute inset-0 grid place-items-center">
+                <p className="headline text-7xl">다 찍었어요</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* 찍은 컷 */}
-      <div className="mt-5 grid grid-cols-8 gap-1.5">
+      {/* 찍은 컷 — 가로에서는 카메라에 자리를 내주려고 더 작게 줄인다 */}
+      <div className="film mt-5 grid grid-cols-8 gap-1.5">
         {Array.from({ length: SHOT_COUNT }, (_, i) => (
           <div
             key={i}
@@ -184,8 +194,6 @@ export function ShootScreen({
           </div>
         ))}
       </div>
-
-      <div className="flex-1" />
 
       <div className="mt-5">
         <BigButton

@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Screen, TopRule } from "./screen";
 import { BigButton } from "@/components/ui/big-button";
-import { composeFrame } from "@/lib/compose";
 import { PAGE_INCH, PAGE_RATIO } from "@/lib/frame";
 
 /**
@@ -12,42 +10,31 @@ import { PAGE_INCH, PAGE_RATIO } from "@/lib/frame";
  * 여기 보이는 그림이 인쇄로 보내는 그림 그 자체다 (같은 dataURL).
  * 미리보기용을 따로 만들지 않는 이유 — 둘이 갈라지면 "보인 것과 다르게 나온다".
  *
- * 종이색 바탕에 검정 프레임을 올린다. 실제로 책상 위에 인화물을 놓고
+ * 합성은 앞 단계(프레임 고르기)에서 이미 끝났다. 여기서 다시 만들면 같은 일을
+ * 두 번 하고, 그사이 화면이 비어 보인다.
+ *
+ * 종이색 바탕에 프레임을 올린다. 실제로 책상 위에 인화물을 놓고
  * 들여다보는 상황과 같아서, 인쇄 결과를 가장 정직하게 가늠할 수 있다.
  */
 export function PreviewScreen({
-  shots,
+  composed,
+  frameName,
   onBack,
   onConfirm,
 }: {
-  shots: string[];
+  /** 프레임 고르기에서 만들어 넘겨준 완성본 */
+  composed: string | null;
+  frameName: string;
   onBack: () => void;
-  onConfirm: (composed: string) => void;
+  onConfirm: () => void;
 }) {
-  const [composed, setComposed] = useState<string | null>(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    let alive = true;
-    composeFrame(shots)
-      .then((url) => {
-        if (alive) setComposed(url);
-      })
-      .catch((e) => {
-        if (alive) setError(e instanceof Error ? e.message : String(e));
-      });
-    return () => {
-      alive = false;
-    };
-  }, [shots]);
-
   return (
     <Screen>
       <TopRule
         label="완성"
         right={
           <span className="text-lg font-semibold">
-            {PAGE_INCH.w} × {PAGE_INCH.h} 인치
+            {frameName} &middot; {PAGE_INCH.w} × {PAGE_INCH.h} 인치
           </span>
         }
       />
@@ -60,7 +47,7 @@ export function PreviewScreen({
           style={{ aspectRatio: PAGE_RATIO, maxHeight: "100%", maxWidth: "100%" }}
         >
           {composed ? (
-            // 방금 캔버스로 만든 결과물이라 next/image 대신 원본을 그대로 쓴다
+            // 앞 단계에서 캔버스로 만든 결과물이라 next/image 대신 원본을 그대로 쓴다
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={composed}
@@ -69,7 +56,7 @@ export function PreviewScreen({
             />
           ) : (
             <div className="text-paper/50 grid h-full place-items-center px-8 text-center text-xl">
-              {error ? error : "사진을 붙이는 중"}
+              사진을 붙이는 중
             </div>
           )}
         </div>
@@ -77,13 +64,9 @@ export function PreviewScreen({
 
       <div className="flex items-center gap-4">
         <BigButton variant="line" onClick={onBack}>
-          다시 고르기
+          프레임 다시
         </BigButton>
-        <BigButton
-          className="flex-1"
-          disabled={!composed}
-          onClick={() => composed && onConfirm(composed)}
-        >
+        <BigButton className="flex-1" disabled={!composed} onClick={onConfirm}>
           선택 완료
         </BigButton>
       </div>

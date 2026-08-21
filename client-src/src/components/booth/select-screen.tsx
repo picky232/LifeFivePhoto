@@ -71,7 +71,7 @@ export function SelectScreen({
         </div>
       </div>
 
-      <div className="mt-7 grid grid-cols-4 gap-3">
+      <div className="picks mt-7 grid grid-cols-4 gap-3">
         {shots.map((shot, i) => {
           const order = picked.indexOf(i);
           const isPicked = order >= 0;
