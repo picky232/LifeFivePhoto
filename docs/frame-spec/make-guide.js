@@ -180,7 +180,7 @@ async function main() {
       vdim(PX - 40, PY + t0.y + G.CH, PY + t0.y + G.CH + G.GY, '간격 ' + G.GY + 'px', '#7a6f66');
 
       hdim(PY - 44, PX + t0.x, PX + t0.x + G.CW, '사진 ' + G.CW + 'px', 'center', '#1f5e59');
-      hdim(PY - 110, PX, PX + G.SAFE, '잘림 ' + G.SAFE + 'px (10mm)', 'right', '#c0392b');
+      hdim(PY - 110, PX, PX + G.SAFE, '잘림 ' + G.SAFE + 'px (' + mm(G.SAFE) + 'mm)', 'right', '#c0392b');
       hdim(PY - 110, PX + G.channel.x, PX + G.channel.x + G.channel.w,
         '간격 ' + G.GX + 'px', 'center', '#7a6f66');
 
@@ -190,7 +190,7 @@ async function main() {
       ly += 52;
 
       const legend = [
-        ['빨간 빗금', '#f6dedb', '#c0392b', '잘려나가는 자리 (사방 10mm). 바탕과 무늬는 여기까지 채우되, 글자·로고·사진은 넣지 않습니다'],
+        ['빨간 빗금', '#f6dedb', '#c0392b', '잘려나가는 자리 (사방 ' + mm(G.SAFE) + 'mm). 바탕과 무늬는 여기까지 채우되, 글자·로고·사진은 넣지 않습니다'],
         ['빨간 점선', '#ffffff', '#c0392b', '안전선. 이 안쪽만 종이에 확실히 남습니다'],
         ['민트 칸 1~5', '#e9f7f5', '#2aa89e', '사진이 들어가는 자리. 완성 PNG 에서는 완전히 뚫려 있어야 합니다 (알파 0)'],
         ['연한 민트 배경', '#d5f0ec', '#2aa89e', '학과 관련 물품·일러스트를 그릴 수 있는 자리'],
@@ -220,7 +220,7 @@ async function main() {
         size: 24, color: '#6d6a64',
       });
       ly += 34;
-      text('인화기 여백이 더 붙습니다. 사방 10mm 를 잡아둔 것은 그 둘을 합쳐 잡은 값입니다.', 100, ly, {
+      text('인화기 여백이 더 붙습니다. 사방 ' + mm(G.SAFE) + 'mm 를 잡아둔 것은 그 둘을 합쳐 잡은 값입니다.', 100, ly, {
         size: 24, color: '#6d6a64',
       });
 

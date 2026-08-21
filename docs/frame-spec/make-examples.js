@@ -132,7 +132,7 @@ async function main() {
         // 좌우 여백은 52px 뿐이라 마스코트가 안 들어간다. 잘리지 않는
         // 아래 여백에 한 줄로 늘어놓는다.
         const step = S.w / 5;
-        mascots.forEach((m, i) => fit(g, m, S.x + i * step + step / 2 - 31, 1552, 60, 72, 0.26));
+        mascots.forEach((m, i) => fit(g, m, S.x + i * step + step / 2 - 31, S.y + S.h - 105, 62, 62, 0.26));
 
         // 가운데 통로 — 점선과 학과 색 점
         g.save();
@@ -183,9 +183,9 @@ async function main() {
         const bandW = S.w / 5;
         DEPTS.forEach((d, i) => {
           g.fillStyle = d.color;
-          g.fillRect(S.x + i * bandW, 1638, bandW - 6, 7);
+          g.fillRect(S.x + i * bandW, S.y + S.h - 35, bandW - 6, 7);
         });
-        text(g, 'BUNDANG GYEONGYEONG HIGH SCHOOL', G.W / 2, 1676, {
+        text(g, 'BUNDANG GYEONGYEONG HIGH SCHOOL', G.W / 2, S.y + S.h - 7, {
           size: 17, color: 'rgba(240,238,233,0.32)', align: 'center', track: 4,
         });
 
@@ -258,9 +258,9 @@ async function main() {
         const bandW = S.w / 5;
         DEPTS.forEach((d, i) => {
           g.fillStyle = d.color;
-          g.fillRect(S.x + i * bandW, 1638, bandW - 8, 7);
+          g.fillRect(S.x + i * bandW, S.y + S.h - 41, bandW - 8, 7);
         });
-        text(g, '2026 학과 홍보 부스', G.W / 2, 1672, {
+        text(g, '2026 학과 홍보 부스', G.W / 2, S.y + S.h - 11, {
           size: 18, color: '#a9a294', align: 'center', track: 3,
         });
 
