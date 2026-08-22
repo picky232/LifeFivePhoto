@@ -62,6 +62,10 @@ async function main() {
     })),
     SCHOOL: depts.SCHOOL_NAME,
     symbol: dataUrl('symbol.png'),
+    qr: dataUrl('qr-pr.png'),
+    // 만든 곳 — 다른 프레임에 적힌 것과 같은 순서로 둔다
+    CREDIT: '홍보기획부 × 인공지능개발과 × 그래픽디자인과',
+    TAGLINE: '상상이 현실이 되는',
   };
 
   const puppeteer = require(path.join(ROOT, 'server', 'node_modules', 'puppeteer-core'));
@@ -146,19 +150,78 @@ async function main() {
         fitBottom(mascots[i], s.x + s.w - 190, by - 128, 175, 210);
       });
 
-      // 로고 칸
+      /* ── 로고 칸 ─────────────────────────────────────────
+         가운데를 축으로 위에서 아래로: 곡선 문구 · 이름 · 학교 · 만든 곳.
+         QR 은 이 흐름에 끼우지 않고 오른쪽 아래 구석에 따로 앉힌다. */
       const b = C.BRAND;
-      text('분경5컷', b.x + 6, b.y + 190, { size: 96, color: GREEN, weight: '800' });
+      const cx = b.x + b.w / 2;
 
-      const pillY = b.y + b.h - 92;
+      /** 글자를 원호 위에 한 자씩 세워 그린다 */
+      function arcText(str, ax, ay, radius, size, color) {
+        g.save();
+        g.font = `600 ${size}px ${KO}`;
+        g.fillStyle = color;
+        g.textAlign = 'center';
+        g.textBaseline = 'alphabetic';
+
+        const chars = [...str];
+        // 글자마다 폭이 달라 균등 분할하면 자간이 들쭉날쭉해진다.
+        // 폭을 재서 호의 길이로 나눈다.
+        const widths = chars.map((ch) => g.measureText(ch).width);
+        const total = widths.reduce((s, w) => s + w, 0) + (chars.length - 1) * size * 0.18;
+        const span = total / radius; // 호가 차지하는 각도
+        let angle = -span / 2;
+
+        for (let i = 0; i < chars.length; i++) {
+          const step = widths[i] / radius;
+          angle += step / 2;
+          g.save();
+          g.translate(ax, ay);
+          g.rotate(angle);
+          g.translate(0, -radius);
+          g.fillText(chars[i], 0, 0);
+          g.restore();
+          angle += step / 2 + (size * 0.18) / radius;
+        }
+        g.restore();
+      }
+
+      // 위로 볼록한 호가 되도록 중심을 아래에 둔다
+      arcText(C.TAGLINE, cx, b.y + 78 + 250, 250, 25, 'rgba(255,255,255,0.70)');
+
+      text('분경5컷', cx, b.y + 190, {
+        size: 86, color: GREEN, weight: '800', align: 'center',
+      });
+
+      const pillW = 286, pillH = 58;
+      const pillY = b.y + 224;
       g.fillStyle = GREEN;
       g.beginPath();
-      g.roundRect(b.x + 6, pillY, b.w - 12, 74, 10);
+      g.roundRect(cx - pillW / 2, pillY, pillW, pillH, 9);
       g.fill();
-      text(C.SCHOOL, b.x + 32, pillY + 48, { size: 32, color: INK, weight: '700' });
+      const sw = 36;
+      text(C.SCHOOL, cx - 14, pillY + 39, { size: 25, color: INK, weight: '700', align: 'center' });
+      g.drawImage(symbol, cx + pillW / 2 - sw - 16, pillY + (pillH - sw) / 2, sw, sw);
 
-      const sw = 46;
-      g.drawImage(symbol, b.x + b.w - 12 - sw - 18, pillY + (74 - sw) / 2, sw, sw);
+      // QR 이 오른쪽 아래를 차지하므로 그 위에서 끊는다. 두 줄로 나눠야
+      // 한 줄로 늘어놓았을 때처럼 QR 에 가려지지 않는다.
+      text('홍보기획부 × 인공지능개발과', cx, pillY + pillH + 44, {
+        size: 18, color: 'rgba(255,255,255,0.55)', align: 'center',
+      });
+      text('× 그래픽디자인과', cx, pillY + pillH + 72, {
+        size: 18, color: 'rgba(255,255,255,0.55)', align: 'center',
+      });
+
+      // QR — 오른쪽 아래 구석. 흰 여백을 조금 둬야 스캔이 붙는다
+      const qrImg = await load(C.qr);
+      const qs = 92, pad = 7;
+      const qx = b.x + b.w - qs - pad * 2;
+      const qy = b.y + b.h - qs - pad * 2;
+      g.fillStyle = '#ffffff';
+      g.beginPath();
+      g.roundRect(qx, qy, qs + pad * 2, qs + pad * 2, 10);
+      g.fill();
+      g.drawImage(qrImg, qx + pad, qy + pad, qs, qs);
 
       return c.toDataURL('image/png');
     }, cfg);
