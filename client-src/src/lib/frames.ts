@@ -44,7 +44,7 @@ export const FRAMES: Frame[] = [
     // 종이에서는 이 흰 테가 있어야 잘려도 표가 안 나는데, 화면에서는 그냥
     // 여백으로 보여 셋 중 이것만 작아 보인다. 네 변이 다른 것은 원본이
     // 그렇게 그려져 있어서다 — 눈대중이 아니라 화소를 세어 잰 값이다.
-    trim: { top: 84, right: 50, bottom: 34, left: 39 },
+    trim: { top: 84, right: 42, bottom: 69, left: 39 },
   },
   {
     id: "neon",
