@@ -186,44 +186,61 @@ async function main() {
         g.restore();
       }
 
-      // 위로 볼록한 호가 되도록 중심을 아래에 둔다
-      arcText(C.TAGLINE, cx, b.y + 78 + 250, 250, 25, 'rgba(255,255,255,0.70)');
+      /* QR 크기는 취향이 아니라 계산으로 정한다.
+         이 QR 은 41칸이고, 종이에서 한 칸이 0.4mm 아래로 내려가면 초점이 맞아도
+         카메라가 못 읽는다. 캔버스 1200px 이 종이 100mm 이므로 한 칸 5px 이면
+         0.417mm 다. 여백(quiet zone)은 표준대로 사방 4칸을 둔다 — 검정 바탕에
+         딱 붙이면 파인더를 못 찾는다.
+         그래서 흰 네모는 (41 + 4 + 4) x 5 = 245px 이 되고, 오른쪽 아래
+         구석을 통째로 차지한다. 위 요소들은 그 위로 비켜 앉힌다. */
+      const MOD = 5, QUIET = 4, MODULES = 41;
+      const QS = MODULES * MOD;                 // 205
+      const QPAD = QUIET * MOD;                 // 20
+      const QBOX = QS + QPAD * 2;               // 245
+      const qx = b.x + b.w - QBOX;
+      const qy = b.y + b.h - QBOX;
 
-      text('분경5컷', cx, b.y + 190, {
-        size: 86, color: GREEN, weight: '800', align: 'center',
+      // 위로 볼록한 호가 되도록 중심을 아래에 둔다
+      arcText(C.TAGLINE, cx, b.y + 30 + 250, 250, 24, 'rgba(255,255,255,0.70)');
+
+      text('분경5컷', cx, b.y + 124, {
+        size: 78, color: GREEN, weight: '800', align: 'center',
       });
 
-      const pillW = 286, pillH = 58;
-      const pillY = b.y + 224;
+      // 학교 띠는 QR 흰 네모 위쪽 선(b.y+212)에 닿지 않게 올려 둔다
+      const pillW = 264, pillH = 52;
+      const pillY = b.y + 146;
       g.fillStyle = GREEN;
       g.beginPath();
-      g.roundRect(cx - pillW / 2, pillY, pillW, pillH, 9);
+      g.roundRect(cx - pillW / 2, pillY, pillW, pillH, 8);
       g.fill();
-      const sw = 36;
-      text(C.SCHOOL, cx - 14, pillY + 39, { size: 25, color: INK, weight: '700', align: 'center' });
-      g.drawImage(symbol, cx + pillW / 2 - sw - 16, pillY + (pillH - sw) / 2, sw, sw);
+      const sw = 32;
+      text(C.SCHOOL, cx - 12, pillY + 35, { size: 23, color: INK, weight: '700', align: 'center' });
+      g.drawImage(symbol, cx + pillW / 2 - sw - 14, pillY + (pillH - sw) / 2, sw, sw);
 
-      // QR 이 오른쪽 아래를 차지하므로 그 위에서 끊는다. 두 줄로 나눠야
-      // 한 줄로 늘어놓았을 때처럼 QR 에 가려지지 않는다.
-      text('홍보기획부 × 인공지능개발과', cx, pillY + pillH + 44, {
-        size: 18, color: 'rgba(255,255,255,0.55)', align: 'center',
+      // 만든 곳 — QR 왼쪽에 두 줄로. 한 줄로 늘어놓으면 QR 에 가린다.
+      const creditX = b.x + (qx - b.x) / 2;
+      text('홍보기획부', creditX, qy + 76, {
+        size: 17, color: 'rgba(255,255,255,0.55)', align: 'center',
       });
-      text('× 그래픽디자인과', cx, pillY + pillH + 72, {
-        size: 18, color: 'rgba(255,255,255,0.55)', align: 'center',
+      text('× 인공지능개발과', creditX, qy + 102, {
+        size: 17, color: 'rgba(255,255,255,0.55)', align: 'center',
+      });
+      text('× 그래픽디자인과', creditX, qy + 128, {
+        size: 17, color: 'rgba(255,255,255,0.55)', align: 'center',
       });
 
-      // QR — 오른쪽 아래 구석. 흰 여백을 조금 둬야 스캔이 붙는다
+      // 흰 여백을 두고 얹는다 — 검정에 딱 붙이면 스캔이 잘 안 붙는다.
+      // 모서리를 둥글리지 않는다. 여백을 깎으면 그만큼 quiet zone 이 준다.
       const qrImg = await load(C.qr);
-      const qs = 92, pad = 7;
-      const qx = b.x + b.w - qs - pad * 2;
-      const qy = b.y + b.h - qs - pad * 2;
       g.fillStyle = '#ffffff';
-      g.beginPath();
-      g.roundRect(qx, qy, qs + pad * 2, qs + pad * 2, 10);
-      g.fill();
-      g.drawImage(qrImg, qx + pad, qy + pad, qs, qs);
+      g.fillRect(qx, qy, QBOX, QBOX);
+      // 칸 경계가 흐려지지 않게 보간을 끈다 (820px 을 205px 로, 정확히 4:1)
+      g.imageSmoothingEnabled = false;
+      g.drawImage(qrImg, qx + QPAD, qy + QPAD, QS, QS);
+      g.imageSmoothingEnabled = true;
 
-      return c.toDataURL('image/png');
+return c.toDataURL('image/png');
     }, cfg);
 
     const buf = Buffer.from(url.split(',')[1], 'base64');
