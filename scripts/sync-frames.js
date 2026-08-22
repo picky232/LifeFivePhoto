@@ -9,7 +9,7 @@
  *   node scripts/sync-frames.js --from "D:\\어딘가\\Frame"
  *
  * 프레임이 오갈 때마다 같은 일을 손으로 되풀이했다 — 뚫고, 칸에 맞는지 재고,
- * 흰 테를 재서 trim 을 고치고, 빌드하고, client 로 미러링한다. 한 단계라도
+ * 흰 테를 재고, 빌드하고, client 로 미러링한다. 한 단계라도
  * 빠뜨리면 화면에 반영이 안 되거나 사진 가장자리에 흰 테가 생긴다.
  *
  * 칸 자리가 안 맞으면 **넣지 않고 멈춘다.** 넣어두면 그 자리에 바탕이 비쳐
@@ -23,7 +23,6 @@ const { execSync, spawnSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
 const FRAMES_DIR = path.join(ROOT, 'client-src', 'public', 'frames');
-const FRAMES_TS = path.join(ROOT, 'client-src', 'src', 'lib', 'frames.ts');
 // public 안에 두면 빌드 결과물에 섞여 client/ 까지 따라간다. 밖에 둔다.
 const STAMP = path.join(ROOT, '.frame-sync.json');
 
@@ -63,50 +62,11 @@ function writeStamp(s) {
   fs.writeFileSync(STAMP, JSON.stringify(s, null, 2));
 }
 
-/**
- * frames.ts 에서 한 프레임의 trim 만 바꾼다.
- *
- * 줄 단위로 다룬다. 정규식으로 통째로 훑었더니 파일이 CRLF 라 $ 가 \r 앞에
- * 걸려, 앞 주석과 trim 줄이 한 줄로 붙고 파일 전체 줄바꿈이 바뀌었다.
- */
-function setTrim(id, trim) {
-  const raw = fs.readFileSync(FRAMES_TS, 'utf8');
-  const nl = raw.includes('\r\n') ? '\r\n' : '\n';
-  const lines = raw.split(/\r?\n/);
-
-  const at = lines.findIndex((l) => l.includes(`id: "${id}"`));
-  if (at < 0) throw new Error(`frames.ts 에 id "${id}" 가 없습니다.`);
-
-  let end = at;
-  while (end < lines.length && lines[end].trim() !== '},') end += 1;
-  if (end >= lines.length) throw new Error(`frames.ts 의 "${id}" 항목 끝을 못 찾았습니다.`);
-
-  const line = trim
-    ? `    trim: { top: ${trim.top}, right: ${trim.right}, bottom: ${trim.bottom}, left: ${trim.left} },`
-    : null;
-
-  const rel = lines.slice(at, end);
-  const trimAt = rel.findIndex((l) => /^\s*trim: \{/.test(l));
-
-  let changed = false;
-  if (trimAt >= 0) {
-    const i = at + trimAt;
-    if (line) {
-      if (lines[i] !== line) { lines[i] = line; changed = true; }
-    } else {
-      lines.splice(i, 1);
-      changed = true;
-    }
-  } else if (line) {
-    const imgAt = rel.findIndex((l) => /^\s*image: "/.test(l));
-    if (imgAt < 0) throw new Error(`frames.ts 의 "${id}" 에 image 줄이 없습니다.`);
-    lines.splice(at + imgAt + 1, 0, line);
-    changed = true;
-  }
-
-  if (changed) fs.writeFileSync(FRAMES_TS, lines.join(nl));
-  return changed;
-}
+/* 프레임 그림의 흰 테는 재서 알려주기만 한다.
+   고르는 화면은 인화 재단값(frame.ts 의 PRINT_TRIM)으로 모든 프레임을
+   똑같이 자른다 — 잘리는 양은 인화기가 정하는 것이지 그림이 정하는 게
+   아니다. 그림의 흰 테로 자르면 네 변이 제각각이라 한쪽만 잘린 것처럼
+   보인다. */
 
 /* ── 한 장 반영 ──────────────────────────────────────────── */
 
@@ -114,34 +74,44 @@ function apply(entry) {
   const src = path.join(FROM, entry.source);
   const dest = path.join(FRAMES_DIR, entry.id + '.png');
 
-  if (path.extname(src).toLowerCase() === '.png') {
-    fs.copyFileSync(src, dest);
-  } else {
-    // 흰 칸을 뚫어 PNG 로 바꾼다 (마스코트는 남는다)
-    const r = node([path.join(__dirname, 'punch-frame.js'), src, dest]);
-    if (r.status !== 0) throw new Error(`뚫기 실패: ${(r.stderr || r.stdout || '').trim().split('\n').pop()}`);
+  /* 옆자리에서 만들어 검사한 뒤에야 제자리에 넣는다.
+     예전에는 곧바로 덮어쓰고 검사에서 걸리면 지웠는데, 그러면 멀쩡히 쓰던
+     프레임까지 사라져 고르는 화면에 "불러오지 못했습니다" 가 떴다. 새 파일이
+     못 쓸 것이면 쓰던 것을 그대로 두는 편이 맞다. */
+  const tmp = dest + '.new';
+
+  try {
+    if (path.extname(src).toLowerCase() === '.png') {
+      fs.copyFileSync(src, tmp);
+    } else {
+      // 흰 칸을 뚫어 PNG 로 바꾼다 (마스코트는 남는다)
+      const r = node([path.join(__dirname, 'punch-frame.js'), src, tmp]);
+      if (r.status !== 0) throw new Error(`뚫기 실패: ${(r.stderr || r.stdout || '').trim().split('\n').pop()}`);
+    }
+
+    // 칸 자리에 맞는지
+    const check = node([path.join(__dirname, 'check-frame.js'), tmp]);
+    if (check.status !== 0) {
+      const why = (check.stdout || '').split('\n').filter((l) => l.includes('✗')).slice(0, 2).join(' / ');
+      const kept = fs.existsSync(dest) ? ' (쓰던 것은 그대로 둡니다)' : '';
+      throw new Error(`칸 자리가 안 맞습니다${kept} — ${why || '자세한 것은 check-frame.js 로'}`);
+    }
+
+    // 가장자리 흰 테 — 알려주기만 한다
+    const m = node([path.join(__dirname, 'check-frame.js'), '--measure', '--json', tmp]);
+    if (m.status !== 0) throw new Error('재기 실패');
+    const info = JSON.parse(m.stdout)[0];
+
+    fs.renameSync(tmp, dest);
+
+    return {
+      id: entry.id,
+      trim: info.trim,
+      holes: info.holes.length,
+    };
+  } finally {
+    fs.rmSync(tmp, { force: true });
   }
-
-  // 칸 자리에 맞는지
-  const check = node([path.join(__dirname, 'check-frame.js'), dest]);
-  if (check.status !== 0) {
-    fs.rmSync(dest, { force: true });
-    const why = (check.stdout || '').split('\n').filter((l) => l.includes('✗')).slice(0, 2).join(' / ');
-    throw new Error(`칸 자리가 안 맞습니다 — ${why || '자세한 것은 check-frame.js 로'}`);
-  }
-
-  // 흰 테를 재서 trim 을 맞춘다
-  const m = node([path.join(__dirname, 'check-frame.js'), '--measure', '--json', dest]);
-  if (m.status !== 0) throw new Error('재기 실패');
-  const info = JSON.parse(m.stdout)[0];
-  const changed = setTrim(entry.id, info.trim);
-
-  return {
-    id: entry.id,
-    trim: info.trim,
-    trimChanged: changed,
-    holes: info.holes.length,
-  };
 }
 
 /* ── 한 바퀴 ─────────────────────────────────────────────── */
@@ -180,7 +150,7 @@ function sweep() {
     const t = d.trim
       ? `흰 테 위 ${d.trim.top} 아래 ${d.trim.bottom} 왼 ${d.trim.left} 오른 ${d.trim.right}`
       : '흰 테 없음';
-    say(`  ${d.id}  들어감 · 칸 ${d.holes}개 · ${t}${d.trimChanged ? ' (trim 갱신)' : ''}`);
+    say(`  ${d.id}  들어감 · 칸 ${d.holes}개 · ${t}`);
   }
   for (const f of failed) {
     say(`  ${f.id}  ✗ ${f.source} — ${f.why}`);
