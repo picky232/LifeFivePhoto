@@ -29,7 +29,7 @@ const STAMP = path.join(ROOT, 'client-src', 'public', 'frames', '.sync-stamp.jso
 /** 폴더에 놓인 파일 이름과 앱 안의 프레임을 잇는다 */
 const MAP = [
   { source: 'frame_01.png', id: 'mint' },
-  { source: 'frame_03.jpg', id: 'neon' },
+  { source: 'frame_02.png', id: 'neon' },
   { source: 'frame_dark.png', id: 'dark' },
 ];
 
