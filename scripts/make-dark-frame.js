@@ -187,29 +187,33 @@ async function main() {
       }
 
       /* QR 크기는 취향이 아니라 계산으로 정한다.
-         이 QR 은 41칸이고, 종이에서 한 칸이 0.4mm 아래로 내려가면 초점이 맞아도
-         카메라가 못 읽는다. 캔버스 1200px 이 종이 100mm 이므로 한 칸 5px 이면
-         0.417mm 다. 여백(quiet zone)은 표준대로 사방 4칸을 둔다 — 검정 바탕에
-         딱 붙이면 파인더를 못 찾는다.
-         그래서 흰 네모는 (41 + 4 + 4) x 5 = 245px 이 되고, 오른쪽 아래
-         구석을 통째로 차지한다. 위 요소들은 그 위로 비켜 앉힌다. */
-      const MOD = 5, QUIET = 4, MODULES = 41;
-      const QS = MODULES * MOD;                 // 205
+         종이에서 한 칸이 0.4mm 아래로 내려가면 초점이 맞아도 카메라가 못
+         읽는다. 캔버스 1200px 이 종이 100mm 이므로 한 칸 5px 이면 0.417mm 다.
+         여백(quiet zone)은 표준대로 사방 4칸 — 검정 바탕에 딱 붙이면
+         파인더를 못 찾는다.
+
+         작게 만들려면 한 칸을 줄이는 게 아니라 칸 수를 줄여야 한다. 한 칸을
+         줄이면 곧바로 0.4mm 밑으로 떨어진다. 그래서 오류복원을 H(41칸)에서
+         M(33칸)으로 낮췄다 — 로고가 덮이지 않는 깨끗한 QR 이라 M 으로 충분하다.
+         흰 네모는 (33 + 4 + 4) x 5 = 205px 이 된다.
+         칸 수를 바꾸면 MODULES 도 같이 고쳐야 한다 (make-qr 쪽 설정과 한 쌍). */
+      const MOD = 5, QUIET = 4, MODULES = 33;
+      const QS = MODULES * MOD;                 // 165
       const QPAD = QUIET * MOD;                 // 20
-      const QBOX = QS + QPAD * 2;               // 245
+      const QBOX = QS + QPAD * 2;               // 205
       const qx = b.x + b.w - QBOX;
       const qy = b.y + b.h - QBOX;
 
       // 위로 볼록한 호가 되도록 중심을 아래에 둔다
-      arcText(C.TAGLINE, cx, b.y + 30 + 250, 250, 24, 'rgba(255,255,255,0.70)');
+      arcText(C.TAGLINE, cx, b.y + 50 + 250, 250, 24, 'rgba(255,255,255,0.70)');
 
-      text('분경5컷', cx, b.y + 124, {
+      text('분경5컷', cx, b.y + 148, {
         size: 78, color: GREEN, weight: '800', align: 'center',
       });
 
-      // 학교 띠는 QR 흰 네모 위쪽 선(b.y+212)에 닿지 않게 올려 둔다
+      // 학교 띠 아래(b.y+222)와 QR 흰 네모 위(b.y+281) 사이가 비어야 한다
       const pillW = 264, pillH = 52;
-      const pillY = b.y + 146;
+      const pillY = b.y + 170;
       g.fillStyle = GREEN;
       g.beginPath();
       g.roundRect(cx - pillW / 2, pillY, pillW, pillH, 8);
@@ -235,7 +239,7 @@ async function main() {
       const qrImg = await load(C.qr);
       g.fillStyle = '#ffffff';
       g.fillRect(qx, qy, QBOX, QBOX);
-      // 칸 경계가 흐려지지 않게 보간을 끈다 (820px 을 205px 로, 정확히 4:1)
+      // 칸 경계가 흐려지지 않게 보간을 끈다 (660px 을 165px 로, 정확히 4:1)
       g.imageSmoothingEnabled = false;
       g.drawImage(qrImg, qx + QPAD, qy + QPAD, QS, QS);
       g.imageSmoothingEnabled = true;

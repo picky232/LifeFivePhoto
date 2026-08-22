@@ -28,7 +28,7 @@ const BASE_URL = `http://localhost:${PORT}`;
 const SERVER_PATH = path.join(__dirname, 'server.js');
 const PHONE = '01099887766';
 
-// 촬영은 8장 × 10초라 1분 20초쯤 걸린다. 넉넉하게 잡는다.
+// 촬영은 8장 × 5초(frame.ts 의 SHOOT_INTERVAL)라 40초쯤 걸린다. 넉넉하게 잡는다.
 const SHOOT_TIMEOUT_MS = 150000;
 
 const CHROME_CANDIDATES = [
@@ -244,7 +244,7 @@ async function run() {
 
   await clickByText(page, '촬영 시작');
 
-  log('촬영 중 (8장 × 10초, 약 80초)...');
+  log('촬영 중 (8장 × 5초, 약 40초)...');
   await waitForText(page, '마음에 드는', SHOOT_TIMEOUT_MS);
   steps.push('8장 촬영 완료');
 
