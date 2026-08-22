@@ -372,18 +372,21 @@ function check(file, geometry) {
  * 흰 테는 frames.ts 의 trim 에 그대로 넣는 값이다 — 인쇄에는 있어야 하고
  * 고르는 화면에서만 감춘다.
  */
-function measure(file) {
+function measure(file, asJson) {
   const img = decode(file);
   const at = (x, y) => img.alpha[y * img.w + x];
   const clear = (x, y) => at(x, y) < CLEAR;
 
-  console.log(`${file}`);
-  console.log(`  크기 ${img.w}x${img.h}`);
+  if (!asJson) {
+    console.log(`${file}`);
+    console.log(`  크기 ${img.w}x${img.h}`);
+  }
 
   if (!img.hasAlpha) {
+    if (asJson) return { file, w: img.w, h: img.h, hasAlpha: false, holes: [], trim: null };
     console.log('  알파 채널이 없습니다 — 뚫린 자리가 없습니다.');
     console.log('  사진 자리가 흰색이라면 scripts/punch-frame.js 로 뚫으세요.');
-    return;
+    return null;
   }
 
   // 뚫린 덩어리를 찾는다
@@ -419,9 +422,11 @@ function measure(file) {
   }
   holes.sort((a, b) => a.y - b.y || a.x - b.x);
 
-  console.log(`  뚫린 자리 ${holes.length}개`);
-  for (const h of holes) {
-    console.log(`      ${String(h.x).padStart(4)}, ${String(h.y).padStart(4)}   ${h.w} x ${h.h}`);
+  if (!asJson) {
+    console.log(`  뚫린 자리 ${holes.length}개`);
+    for (const h of holes) {
+      console.log(`      ${String(h.x).padStart(4)}, ${String(h.y).padStart(4)}   ${h.w} x ${h.h}`);
+    }
   }
 
   // 가장자리 흰 테 — 흰색이거나 뚫린 자리를 '빈 자리' 로 본다
@@ -439,13 +444,17 @@ function measure(file) {
   let left = 0; while (left < img.w && colBlank(left)) left++;
   let right = 0; while (right < img.w && colBlank(img.w - 1 - right)) right++;
 
+  const trim = top || bottom || left || right ? { top, right, bottom, left } : null;
+  if (asJson) return { file, w: img.w, h: img.h, hasAlpha: true, holes, trim };
+
   console.log('');
-  if (top || bottom || left || right) {
+  if (trim) {
     console.log('  가장자리 흰 테 — frames.ts 의 trim 에 그대로 넣는 값');
     console.log(`      trim: { top: ${top}, right: ${right}, bottom: ${bottom}, left: ${left} }`);
   } else {
     console.log('  가장자리 흰 테 없음 — trim 은 적지 않아도 됩니다');
   }
+  return null;
 }
 
 /* ── 바탕 만들기 ─────────────────────────────────────────── */
@@ -527,9 +536,14 @@ async function main() {
     const geometry = await readGeometry();
 
     if (args[0] === '--measure') {
-      const rest = args.slice(1);
+      const asJson = args.includes('--json');
+      const rest = args.slice(1).filter((a) => a !== '--json');
       if (!rest.length) throw new Error('잴 파일을 적어주세요.');
-      for (const f of rest) { measure(f); console.log(''); }
+      if (asJson) {
+        console.log(JSON.stringify(rest.map((f) => measure(f, true)), null, 2));
+        return;
+      }
+      for (const f of rest) { measure(f, false); console.log(''); }
       return;
     }
 

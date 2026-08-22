@@ -25,3 +25,7 @@ desktop.ini
 client-src/.next/
 client-src/out/
 client-src/node_modules/
+client-src/public/frames/.sync-stamp.json
+
+# 바탕화면 바로가기 (사람마다 다르고 저장소와 무관)
+*.lnk
