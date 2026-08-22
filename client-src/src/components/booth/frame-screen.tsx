@@ -5,37 +5,37 @@ import { Screen, TopRule } from "./screen";
 import { BigButton } from "@/components/ui/big-button";
 import { composeFrame } from "@/lib/compose";
 import { FRAMES, type Frame } from "@/lib/frames";
-import { PAGE } from "@/lib/frame";
-
-/** 흰 테를 뺀 알맹이 크기 */
-function shown(frame: Frame) {
-  const t = frame.trim ?? { top: 0, right: 0, bottom: 0, left: 0 };
-  return { t, w: PAGE.w - t.left - t.right, h: PAGE.h - t.top - t.bottom };
-}
-
-/** 잘라낸 뒤의 가로세로비 */
-function shownRatio(frame: Frame) {
-  const { w, h } = shown(frame);
-  return w / h;
-}
+import { PAGE, PRINT_TRIM } from "@/lib/frame";
 
 /**
- * 잘라내는 방법.
+ * 종이에 남을 만큼만 보여준다.
  *
- * 상자는 알맹이 크기가 되고, 그림은 그보다 큰 원래 크기로 두되 흰 테만큼
- * 왼쪽·위로 밀어낸다. 상자가 넘치는 부분을 숨기므로 흰 테가 보이지 않는다.
- * 잘라낸 그림을 따로 만들지 않으니 인쇄용 결과물은 그대로다.
+ * 인화하면 가장자리가 잘려나간다. 화면에 캔버스를 통째로 보여주면 고를 때는
+ * 있던 것이 종이에는 없다. 그래서 잘릴 만큼(PRINT_TRIM)을 빼고 보여준다.
+ *
+ * 프레임마다 다르게 자르지 않는다. 잘리는 양은 인화기가 정하는 것이지
+ * 그림이 정하는 게 아니다. 예전에 그림의 흰 테 두께로 잘랐더니 프레임마다
+ * 네 변이 제각각이라 한쪽만 잘린 것처럼 보였다.
  */
-function shownStyle(frame: Frame): React.CSSProperties {
-  const { t, w, h } = shown(frame);
-  return {
-    display: "block",
-    width: `${(PAGE.w / w) * 100}%`,
-    height: `${(PAGE.h / h) * 100}%`,
-    marginLeft: `${(-t.left / w) * 100}%`,
-    marginTop: `${(-t.top / h) * 100}%`,
-  };
-}
+const SHOWN = {
+  w: PAGE.w - PRINT_TRIM.x * 2,
+  h: PAGE.h - PRINT_TRIM.y * 2,
+};
+
+const SHOWN_RATIO = SHOWN.w / SHOWN.h;
+
+/**
+ * 상자는 남을 만큼의 크기가 되고, 그림은 원래 크기 그대로 두되 잘릴 만큼
+ * 왼쪽·위로 민다. 넘치는 부분은 상자가 숨긴다. 잘라낸 그림을 따로 만들지
+ * 않으므로 합성과 저장에는 아무 영향이 없다.
+ */
+const SHOWN_STYLE: React.CSSProperties = {
+  display: "block",
+  width: `${(PAGE.w / SHOWN.w) * 100}%`,
+  height: `${(PAGE.h / SHOWN.h) * 100}%`,
+  marginLeft: `${(-PRINT_TRIM.x / SHOWN.w) * 100}%`,
+  marginTop: `${(-PRINT_TRIM.y / SHOWN.h) * 100}%`,
+};
 
 /**
  * 프레임 고르기.
@@ -104,34 +104,27 @@ export function FrameScreen({
               key={frame.id}
               type="button"
               onClick={() => setPicked(frame.id)}
-              className="flex min-h-0 min-w-0 flex-1 flex-col items-center gap-3"
+              className="flex min-h-0 min-w-0 flex-1 flex-col items-center"
             >
-              {/* 고른 것은 테두리로 표시한다. 크기를 키우면 여러 장이 나란히
-                  있을 때 줄이 흔들려서 오히려 고르기 어렵다. */}
+              {/* 이름을 붙이지 않는다. 그림을 보고 고르는 것이지 "민트"·"네온"
+                  이라는 말을 보고 고르는 게 아니다. 고른 것은 테두리로 알린다 —
+                  크기를 키우면 여러 장이 나란히 있을 때 줄이 흔들린다. */}
               <div
                 className="frame-shot relative overflow-hidden bg-black"
                 style={{
-                  aspectRatio: shownRatio(frame),
+                  aspectRatio: SHOWN_RATIO,
                   outline: on ? "6px solid var(--color-ink)" : "1px solid rgba(10,10,10,0.2)",
                 }}
               >
                 {url ? (
                   // 방금 캔버스로 만든 결과물이라 next/image 대신 원본을 그대로 쓴다.
-                  // 흰 테가 있는 프레임은 그만큼 키우고 밀어 상자 밖으로 내보낸다.
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={url} alt={`${frame.name} 프레임`} style={shownStyle(frame)} />
+                  <img src={url} alt={`${frame.name} 프레임`} style={SHOWN_STYLE} />
                 ) : (
                   <div className="text-paper/50 grid h-full place-items-center px-6 text-center text-lg">
                     {error ? error : "만드는 중"}
                   </div>
                 )}
-              </div>
-
-              <div className="text-center">
-                <p className={`text-2xl font-bold ${on ? "text-ink" : "text-ink-60"}`}>
-                  {frame.name}
-                </p>
-                <p className="text-ink-60 mt-0.5 text-base">{frame.note}</p>
               </div>
             </button>
           );
