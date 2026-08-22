@@ -159,7 +159,16 @@ function decode(file) {
     }
   }
 
-  return { w: ihdr.w, h: ihdr.h, alpha, hasAlpha };
+  // 밝기도 같이 뽑는다 — 가장자리 흰 테를 재는 데 쓴다
+  const light = new Uint8Array(ihdr.w * ihdr.h);
+  for (let i = 0; i < light.length; i++) {
+    if (ihdr.color === 6) light[i] = Math.min(out[i * 4], out[i * 4 + 1], out[i * 4 + 2]);
+    else if (ihdr.color === 2) light[i] = Math.min(out[i * 3], out[i * 3 + 1], out[i * 3 + 2]);
+    else if (ihdr.color === 4) light[i] = out[i * 2];
+    else light[i] = out[i];
+  }
+
+  return { w: ihdr.w, h: ihdr.h, alpha, light, hasAlpha };
 }
 
 const CRC = (() => {
@@ -351,6 +360,94 @@ function check(file, geometry) {
   return ok;
 }
 
+/* ── 재기(--measure) ─────────────────────────────────────── */
+
+/**
+ * 그림에 실제로 뚫린 자리와 가장자리 흰 테를 잰다.
+ *
+ * check 는 "지금 칸에 맞는가" 만 답한다. 새 프레임이 다른 자리에 뚫려 있으면
+ * "안 뚫렸다" 고만 하고 어디에 뚫려 있는지는 말해주지 않는다. 프레임이 오갈
+ * 때마다 그걸 따로 재고 있었기에 여기 붙인다.
+ *
+ * 흰 테는 frames.ts 의 trim 에 그대로 넣는 값이다 — 인쇄에는 있어야 하고
+ * 고르는 화면에서만 감춘다.
+ */
+function measure(file) {
+  const img = decode(file);
+  const at = (x, y) => img.alpha[y * img.w + x];
+  const clear = (x, y) => at(x, y) < CLEAR;
+
+  console.log(`${file}`);
+  console.log(`  크기 ${img.w}x${img.h}`);
+
+  if (!img.hasAlpha) {
+    console.log('  알파 채널이 없습니다 — 뚫린 자리가 없습니다.');
+    console.log('  사진 자리가 흰색이라면 scripts/punch-frame.js 로 뚫으세요.');
+    return;
+  }
+
+  // 뚫린 덩어리를 찾는다
+  const seen = new Uint8Array(img.w * img.h);
+  const holes = [];
+  for (let start = 0; start < img.w * img.h; start++) {
+    if (seen[start] || at(start % img.w, (start / img.w) | 0) >= CLEAR) continue;
+    let x0 = start % img.w, x1 = x0, y0 = (start / img.w) | 0, y1 = y0, area = 0;
+    const stack = [start];
+    seen[start] = 1;
+    while (stack.length) {
+      const p = stack.pop();
+      const px = p % img.w, py = (p / img.w) | 0;
+      area++;
+      if (px < x0) x0 = px;
+      if (px > x1) x1 = px;
+      if (py < y0) y0 = py;
+      if (py > y1) y1 = py;
+      const near = [];
+      if (px > 0) near.push(p - 1);
+      if (px < img.w - 1) near.push(p + 1);
+      if (py > 0) near.push(p - img.w);
+      if (py < img.h - 1) near.push(p + img.w);
+      for (const q of near) {
+        if (seen[q] || at(q % img.w, (q / img.w) | 0) >= CLEAR) continue;
+        seen[q] = 1;
+        stack.push(q);
+      }
+    }
+    // 사진 칸만 남긴다. 글자 사이 틈 같은 작은 구멍은 뺀다
+    if (area < 20000) continue;
+    holes.push({ x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 });
+  }
+  holes.sort((a, b) => a.y - b.y || a.x - b.x);
+
+  console.log(`  뚫린 자리 ${holes.length}개`);
+  for (const h of holes) {
+    console.log(`      ${String(h.x).padStart(4)}, ${String(h.y).padStart(4)}   ${h.w} x ${h.h}`);
+  }
+
+  // 가장자리 흰 테 — 흰색이거나 뚫린 자리를 '빈 자리' 로 본다
+  const blank = (x, y) => clear(x, y) || img.light[y * img.w + x] > 246;
+  const rowBlank = (y) => {
+    for (let x = 0; x < img.w; x++) if (!blank(x, y)) return false;
+    return true;
+  };
+  const colBlank = (x) => {
+    for (let y = 0; y < img.h; y++) if (!blank(x, y)) return false;
+    return true;
+  };
+  let top = 0; while (top < img.h && rowBlank(top)) top++;
+  let bottom = 0; while (bottom < img.h && rowBlank(img.h - 1 - bottom)) bottom++;
+  let left = 0; while (left < img.w && colBlank(left)) left++;
+  let right = 0; while (right < img.w && colBlank(img.w - 1 - right)) right++;
+
+  console.log('');
+  if (top || bottom || left || right) {
+    console.log('  가장자리 흰 테 — frames.ts 의 trim 에 그대로 넣는 값');
+    console.log(`      trim: { top: ${top}, right: ${right}, bottom: ${bottom}, left: ${left} }`);
+  } else {
+    console.log('  가장자리 흰 테 없음 — trim 은 적지 않아도 됩니다');
+  }
+}
+
 /* ── 바탕 만들기 ─────────────────────────────────────────── */
 
 /** 얹어놓고 자리를 보라고 만드는 것이라 비쳐야 한다. 이 값이 255 면 쓸모가 없다. */
@@ -421,12 +518,20 @@ async function main() {
   if (args.length === 0) {
     console.log('쓰는 법');
     console.log('  node scripts/check-frame.js <프레임.png> [...]   자리가 맞는지 잰다');
+    console.log('  node scripts/check-frame.js --measure <프레임.png>   뚫린 자리와 흰 테를 잰다');
     console.log('  node scripts/check-frame.js --template <출력.png>  칸만 뚫린 바탕을 만든다');
     process.exit(2);
   }
 
   try {
     const geometry = await readGeometry();
+
+    if (args[0] === '--measure') {
+      const rest = args.slice(1);
+      if (!rest.length) throw new Error('잴 파일을 적어주세요.');
+      for (const f of rest) { measure(f); console.log(''); }
+      return;
+    }
 
     if (args[0] === '--template') {
       const out = args[1];
