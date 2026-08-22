@@ -29,16 +29,22 @@ export type Frame = {
 
 export const FRAMES: Frame[] = [
   {
-    id: "classic",
-    name: "검정",
-    note: "어두운 바탕에 학과 색 띠",
-    image: "/frames/classic.png",
+    id: "mint",
+    name: "민트",
+    note: "마스코트가 크게 나오는 기본",
+    image: "/frames/mint.png",
   },
   {
-    id: "paper",
-    name: "필름",
-    note: "밝은 바탕에 필름 무늬",
-    image: "/frames/paper.png",
+    id: "neon",
+    name: "네온",
+    note: "빛나는 바탕에 학과 이름표",
+    image: "/frames/neon.png",
+  },
+  {
+    id: "dark",
+    name: "검정",
+    note: "사진이 도드라지는 어두운 바탕",
+    image: "/frames/dark.png",
   },
 ];
 

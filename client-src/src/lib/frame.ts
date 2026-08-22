@@ -33,20 +33,22 @@ export const PAGE = {
 /** 종이 가로세로비. 화면에서 미리보기 박스를 만들 때 쓴다. */
 export const PAGE_RATIO = PAGE.w / PAGE.h;
 
-/** 잘려나가는 자리 — 흰색으로 비운다. 세로가 더 많이 잘려 위아래를 넓게 잡았다 */
-const SAFE_X = 47; // 4mm
-const SAFE_Y = 83; // 7mm
+/**
+ * 컷 자리는 받은 프레임 그림에서 재서 정한다.
+ *
+ * 프레임이 두 벌 들어왔는데 칸 자리가 서로 달랐다. 하나는 105,155 에
+ * 450×430, 나머지 셋은 80,132 근처에 482×454 였다. 칸은 하나로 고정해야
+ * 하므로(촬영이 이 비율로 미리 잘라 두기 때문에), **모든 프레임의 구멍을
+ * 덮는 크기**로 잡았다.
+ *
+ * 사진이 구멍보다 크면 남는 부분은 프레임이 덮어 안 보인다. 반대로 작으면
+ * 구멍 가장자리에 바탕이 비쳐 흰 테가 생긴다. 그래서 큰 쪽에 맞춘다.
+ */
+export const CUT = { w: 485, h: 457 } as const;
 
-const MARGIN_X = 58; // 흰 테 안쪽 좌우 여백
-const MARGIN_Y = 72; // 흰 테 안쪽 위아래 여백
-const GAP_X = 90; // 컷 사이 가로 간격
-const GAP_Y = 100; // 컷 사이 세로 간격
-
-/** 컷 한 칸 크기 — 위 값들에서 딱 나누어떨어지게 골랐다 (450×430) */
-export const CUT = {
-  w: (PAGE.w - SAFE_X * 2 - MARGIN_X * 2 - GAP_X) / 2,
-  h: (PAGE.h - SAFE_Y * 2 - MARGIN_Y * 2 - GAP_Y * 2) / 3,
-} as const;
+/** 왼쪽 열·오른쪽 열의 x, 그리고 세 줄의 y */
+const COL_X = [80, 636] as const;
+const ROW_Y = [132, 673, 1210] as const;
 
 /** 컷 가로세로비. 카메라 미리보기와 썸네일을 이 비율로 잘라야 어긋나지 않는다. */
 export const CUT_RATIO = CUT.w / CUT.h;
@@ -73,8 +75,8 @@ export type Slot = {
  */
 function cell(col: number, row: number) {
   return {
-    x: SAFE_X + MARGIN_X + col * (CUT.w + GAP_X),
-    y: SAFE_Y + MARGIN_Y + row * (CUT.h + GAP_Y),
+    x: COL_X[col],
+    y: ROW_Y[row],
     w: CUT.w,
     h: CUT.h,
   };
