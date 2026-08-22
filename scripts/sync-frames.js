@@ -24,7 +24,8 @@ const { execSync, spawnSync } = require('child_process');
 const ROOT = path.join(__dirname, '..');
 const FRAMES_DIR = path.join(ROOT, 'client-src', 'public', 'frames');
 const FRAMES_TS = path.join(ROOT, 'client-src', 'src', 'lib', 'frames.ts');
-const STAMP = path.join(ROOT, 'client-src', 'public', 'frames', '.sync-stamp.json');
+// public 안에 두면 빌드 결과물에 섞여 client/ 까지 따라간다. 밖에 둔다.
+const STAMP = path.join(ROOT, '.frame-sync.json');
 
 /** 폴더에 놓인 파일 이름과 앱 안의 프레임을 잇는다 */
 const MAP = [
