@@ -72,6 +72,23 @@ export function useCamera() {
         audio: false,
       });
       streamRef.current = stream;
+
+      // 스트림이 끊기는 것을 잡아둔다.
+      //
+      // 아이패드에서 홈으로 나갔다 오거나 화면이 잠기면 트랙이 끝난다. 그때
+      // <video> 는 마지막 장면을 그대로 물고 있어 화면은 멀쩡해 보이는데
+      // grab() 은 아무것도 못 집는다. 촬영 화면이 그걸 모르면 카운트다운이
+      // 멈춘 채 몇 장 찍다 만 자리에서 영영 서 있게 된다.
+      for (const track of stream.getTracks()) {
+        track.addEventListener("ended", () => {
+          // 이미 다른 스트림으로 갈아탄 뒤 늦게 온 신호는 흘린다
+          if (streamRef.current !== stream) return;
+          streamRef.current = null;
+          setError("카메라 연결이 끊겼습니다.");
+          setState("error");
+        });
+      }
+
       bind();
       setState("ready");
     } catch (e) {

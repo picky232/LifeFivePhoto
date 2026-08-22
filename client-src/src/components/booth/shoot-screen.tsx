@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Screen, TopRule } from "./screen";
 import { BigButton } from "@/components/ui/big-button";
 import { CUT_RATIO, SHOOT_INTERVAL, SHOT_COUNT } from "@/lib/frame";
@@ -27,7 +27,7 @@ export function ShootScreen({
   onDone: (shots: string[]) => void;
   onCancel: () => void;
 }) {
-  const { attachVideo, state, grab } = camera;
+  const { attachVideo, state, grab, start } = camera;
 
   const [shots, setShots] = useState<string[]>([]);
   const [remain, setRemain] = useState(SHOOT_INTERVAL);
@@ -50,17 +50,65 @@ export function ShootScreen({
     setRemain(SHOOT_INTERVAL);
   }, [grab]);
 
+  /**
+   * 영상이 멈췄는지 지켜본다.
+   *
+   * 아이패드에서 홈으로 나갔다 오거나 화면이 잠기면 카메라가 끊긴다. 그때
+   * <video> 는 마지막 장면을 그대로 물고 있어 겉으로는 멀쩡한데 grab() 은
+   * 아무것도 못 집는다. 카운트다운은 찍지도 못하고 되돌지도 못해 그 자리에
+   * 서고, 손님은 몇 장 찍다 만 화면을 보며 하염없이 기다리게 된다.
+   *
+   * 이벤트로 잡으려 했지만 믿을 수 없었다. 트랙을 스스로 끄면 ended 가 아예
+   * 안 오고, iOS 가 뒤로 보낼 때는 mute 만 오기도 한다. 그래서 어느 쪽이든
+   * 결과로 드러나는 것 하나만 본다 — 재생 시각이 더 이상 흐르지 않는지.
+   */
+  const [stalled, setStalled] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const holdVideo = useCallback(
+    (el: HTMLVideoElement | null) => {
+      videoRef.current = el;
+      attachVideo(el);
+    },
+    [attachVideo],
+  );
+
+  useEffect(() => {
+    if (done) return;
+    let last = -1;
+    let still = 0;
+    const t = setInterval(() => {
+      const v = videoRef.current;
+      if (!v || !v.srcObject) return;
+      const now = v.currentTime;
+      // 세 번 연달아 제자리면 멈춘 것으로 본다. 한 번은 버벅임일 수 있다.
+      still = now === last ? still + 1 : 0;
+      last = now;
+      setStalled(still >= 3);
+    }, 1000);
+    return () => clearInterval(t);
+  }, [done]);
+
+  const lost = state === "error" || stalled;
+  /** 영상이 실제로 흐르는 중인가. 끊긴 뒤의 멈춘 화면은 여기서 걸러진다 */
+  const running = live && !lost;
+
+  const restart = useCallback(() => {
+    setStalled(false);
+    void start();
+  }, [start]);
+
   // 카운트다운. 마지막 1초가 지나는 순간 찍고 다시 SHOOT_INTERVAL 로 되돌린다.
   // 찍는 동작을 타이머 콜백 안에서 하는 게 중요하다 — effect 본문에서 바로 상태를
   // 바꾸면 렌더가 연쇄로 돈다.
   useEffect(() => {
-    if (done || !live) return;
+    if (done || !running) return;
     const t = setTimeout(() => {
       if (remain <= 1) shoot();
       else setRemain((r) => r - 1);
     }, 1000);
     return () => clearTimeout(t);
-  }, [remain, done, live, shoot]);
+  }, [remain, done, running, shoot]);
 
   // 마지막 번쩍임을 보여준 뒤 넘어간다
   useEffect(() => {
@@ -95,7 +143,7 @@ export function ShootScreen({
           <span className="text-paper/55"> / {SHOT_COUNT}</span>
         </p>
 
-        {!done && live && (
+        {!done && running && (
           <div className="flex items-end gap-4">
             <span className="text-paper/50 pb-2 text-xl font-semibold">
               다음 컷까지
@@ -136,7 +184,7 @@ export function ShootScreen({
             style={{ aspectRatio: CUT_RATIO, maxWidth: "100%" }}
           >
           <video
-            ref={attachVideo}
+            ref={holdVideo}
             playsInline
             muted
             autoPlay
@@ -149,9 +197,25 @@ export function ShootScreen({
             style={{ transform: "scaleX(-1)" }}
           />
 
-          {!live && (
-            <div className="text-paper/50 absolute inset-0 grid place-items-center px-8 text-center text-2xl">
-              {state === "error" ? "카메라를 열 수 없습니다" : "카메라 준비 중"}
+          {!running && (
+            <div className="absolute inset-0 grid place-items-center bg-black/80 px-8 text-center">
+              {lost ? (
+                <div>
+                  <p className="headline text-paper text-4xl">카메라가 꺼졌습니다</p>
+                  <p className="text-paper/60 mt-3 text-xl">
+                    찍은 {shots.length}장은 그대로 있습니다
+                  </p>
+                  <button
+                    type="button"
+                    onClick={restart}
+                    className="bg-mint text-ink mt-6 px-8 py-4 text-2xl font-bold"
+                  >
+                    카메라 다시 켜기
+                  </button>
+                </div>
+              ) : (
+                <p className="text-paper/50 text-2xl">카메라 준비 중</p>
+              )}
             </div>
           )}
 
@@ -201,7 +265,7 @@ export function ShootScreen({
           onDark
           wide
           onClick={shoot}
-          disabled={done || !live}
+          disabled={done || !running}
         >
           기다리지 않고 지금 찍기
         </BigButton>
