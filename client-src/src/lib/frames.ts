@@ -25,6 +25,14 @@ export type Frame = {
   note: string;
   /** public 기준 경로. 1200x1800, 사진 자리는 투명 */
   image: string;
+  /**
+   * 고르는 화면에서만 잘라낼 가장자리 (px, 1200x1800 기준).
+   *
+   * 인쇄물에는 손대지 않는다. 종이는 캔버스보다 작아 가장자리가 잘리므로
+   * 흰 테가 있어야 하지만, 화면에서는 그 테가 그냥 여백으로 보인다.
+   * 견본을 나란히 놓았을 때 흰 테가 있는 것만 작아 보여 고르기 어렵다.
+   */
+  trim?: { top: number; right: number; bottom: number; left: number };
 };
 
 export const FRAMES: Frame[] = [
@@ -33,6 +41,10 @@ export const FRAMES: Frame[] = [
     name: "민트",
     note: "마스코트가 크게 나오는 기본",
     image: "/frames/mint.png",
+    // 종이에서는 이 흰 테가 있어야 잘려도 표가 안 나는데, 화면에서는 그냥
+    // 여백으로 보여 셋 중 이것만 작아 보인다. 네 변이 다른 것은 원본이
+    // 그렇게 그려져 있어서다 — 눈대중이 아니라 화소를 세어 잰 값이다.
+    trim: { top: 84, right: 50, bottom: 34, left: 39 },
   },
   {
     id: "neon",

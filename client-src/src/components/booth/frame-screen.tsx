@@ -5,7 +5,37 @@ import { Screen, TopRule } from "./screen";
 import { BigButton } from "@/components/ui/big-button";
 import { composeFrame } from "@/lib/compose";
 import { FRAMES, type Frame } from "@/lib/frames";
-import { PAGE_RATIO } from "@/lib/frame";
+import { PAGE } from "@/lib/frame";
+
+/** 흰 테를 뺀 알맹이 크기 */
+function shown(frame: Frame) {
+  const t = frame.trim ?? { top: 0, right: 0, bottom: 0, left: 0 };
+  return { t, w: PAGE.w - t.left - t.right, h: PAGE.h - t.top - t.bottom };
+}
+
+/** 잘라낸 뒤의 가로세로비 */
+function shownRatio(frame: Frame) {
+  const { w, h } = shown(frame);
+  return w / h;
+}
+
+/**
+ * 잘라내는 방법.
+ *
+ * 상자는 알맹이 크기가 되고, 그림은 그보다 큰 원래 크기로 두되 흰 테만큼
+ * 왼쪽·위로 밀어낸다. 상자가 넘치는 부분을 숨기므로 흰 테가 보이지 않는다.
+ * 잘라낸 그림을 따로 만들지 않으니 인쇄용 결과물은 그대로다.
+ */
+function shownStyle(frame: Frame): React.CSSProperties {
+  const { t, w, h } = shown(frame);
+  return {
+    display: "block",
+    width: `${(PAGE.w / w) * 100}%`,
+    height: `${(PAGE.h / h) * 100}%`,
+    marginLeft: `${(-t.left / w) * 100}%`,
+    marginTop: `${(-t.top / h) * 100}%`,
+  };
+}
 
 /**
  * 프레임 고르기.
@@ -76,19 +106,20 @@ export function FrameScreen({
               onClick={() => setPicked(frame.id)}
               className="flex min-h-0 min-w-0 flex-1 flex-col items-center gap-3"
             >
-              {/* 고른 것은 테두리로 표시한다. 크기를 키우면 두 개가 나란히
+              {/* 고른 것은 테두리로 표시한다. 크기를 키우면 여러 장이 나란히
                   있을 때 줄이 흔들려서 오히려 고르기 어렵다. */}
               <div
                 className="frame-shot relative overflow-hidden bg-black"
                 style={{
-                  aspectRatio: PAGE_RATIO,
+                  aspectRatio: shownRatio(frame),
                   outline: on ? "6px solid var(--color-ink)" : "1px solid rgba(10,10,10,0.2)",
                 }}
               >
                 {url ? (
-                  // 방금 캔버스로 만든 결과물이라 next/image 대신 원본을 그대로 쓴다
+                  // 방금 캔버스로 만든 결과물이라 next/image 대신 원본을 그대로 쓴다.
+                  // 흰 테가 있는 프레임은 그만큼 키우고 밀어 상자 밖으로 내보낸다.
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={url} alt={`${frame.name} 프레임`} className="h-full w-full object-contain" />
+                  <img src={url} alt={`${frame.name} 프레임`} style={shownStyle(frame)} />
                 ) : (
                   <div className="text-paper/50 grid h-full place-items-center px-6 text-center text-lg">
                     {error ? error : "만드는 중"}
